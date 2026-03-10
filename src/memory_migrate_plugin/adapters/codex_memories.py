@@ -15,6 +15,9 @@ class CodexMemoriesAdapter(BaseAdapter):
     def probe(self, path: Path) -> bool:
         return path.is_dir() and (path / "index.json").exists()
 
+    def detect_confidence(self, path: Path) -> int:
+        return 95 if self.probe(path) else 0
+
     def read(self, path: Path) -> CanonicalMemoryPackage:
         package = CanonicalMemoryPackage(package_id=path.name or "codex-memories", source_formats=[self.name])
         memories_dir = path / "memories"

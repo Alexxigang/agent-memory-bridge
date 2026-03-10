@@ -26,6 +26,16 @@ class ClineMemoryBankAdapter(BaseAdapter):
             return False
         return any((path / filename).exists() for filename in DEFAULT_FILE_MAP)
 
+    def detect_confidence(self, path: Path) -> int:
+        if not path.is_dir():
+            return 0
+        matches = sum(1 for filename in DEFAULT_FILE_MAP if (path / filename).exists())
+        if matches == 0:
+            return 0
+        if matches >= 3:
+            return 98
+        return 75
+
     def read(self, path: Path) -> CanonicalMemoryPackage:
         package = CanonicalMemoryPackage(package_id=path.name or "cline-memory-bank", source_formats=[self.name])
         for filename, (kind, title) in DEFAULT_FILE_MAP.items():

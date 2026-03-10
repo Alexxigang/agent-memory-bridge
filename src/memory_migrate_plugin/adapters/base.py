@@ -20,3 +20,6 @@ class BaseAdapter(ABC):
 
     def probe(self, path: Path) -> bool:
         return path.exists()
+
+    def detect_confidence(self, path: Path) -> int:
+        return 100 if self.probe(path) else 0

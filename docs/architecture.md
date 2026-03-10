@@ -10,6 +10,8 @@ This project solves that by introducing a portable intermediate memory layer.
 
 ```text
 source adapter -> canonical memory package -> target adapter
+                              |
+                              +-> merge + dedupe + audit
 ```
 
 The canonical layer is the contract.
@@ -39,8 +41,20 @@ Each adapter implements:
 - `read(path) -> CanonicalMemoryPackage`
 - `write(package, path)`
 - `probe(path) -> bool`
+- `detect_confidence(path) -> int`
 
-This supports explicit conversion and future auto-detection.
+This supports explicit conversion and lightweight auto-detection.
+
+## Merge and dedupe
+
+The v0.2 merge layer combines multiple canonical packages into one output package.
+
+Current dedupe behavior is intentionally conservative:
+
+- exact duplicate `id` values are skipped
+- duplicate fingerprints based on `kind + title + content` are skipped
+
+This gives predictable results without requiring embeddings or remote services.
 
 ## MVP choices
 
@@ -48,11 +62,12 @@ This supports explicit conversion and future auto-detection.
 - file-based interoperability first
 - deterministic JSON output for easy diffing
 - markdown-friendly exports for human editing
+- no network dependency for core migrations
 
 ## Suggested next phases
 
-1. Add auto-detect scoring for unknown sources
-2. Add merge and dedupe strategies
+1. Add auto-detect scoring for more unknown sources
+2. Add conflict reports and merge strategies per entry kind
 3. Add product-specific adapters for more agent ecosystems
 4. Add a small web UI for drag-and-drop migration
 5. Add signed package manifests and optional encryption

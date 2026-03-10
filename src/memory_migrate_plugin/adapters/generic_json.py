@@ -11,6 +11,22 @@ class GenericJsonAdapter(BaseAdapter):
     name = "generic-json"
     description = "JSON import/export using the canonical package schema or a simple entries list."
 
+    def probe(self, path: Path) -> bool:
+        return path.is_file() and path.suffix.lower() == ".json"
+
+    def detect_confidence(self, path: Path) -> int:
+        if not self.probe(path):
+            return 0
+        try:
+            data = load_json(path)
+        except Exception:
+            return 0
+        if isinstance(data, dict) and "entries" in data:
+            return 95
+        if isinstance(data, list):
+            return 70
+        return 30
+
     def read(self, path: Path) -> CanonicalMemoryPackage:
         data = load_json(path)
         if isinstance(data, dict) and "entries" in data:

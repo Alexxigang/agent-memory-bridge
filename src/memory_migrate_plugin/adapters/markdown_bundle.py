@@ -11,6 +11,16 @@ class MarkdownBundleAdapter(BaseAdapter):
     name = "markdown-bundle"
     description = "Folder of markdown files with optional frontmatter."
 
+    def probe(self, path: Path) -> bool:
+        if path.is_file() and path.suffix.lower() == ".md":
+            return True
+        return path.is_dir() and any(path.rglob("*.md"))
+
+    def detect_confidence(self, path: Path) -> int:
+        if not self.probe(path):
+            return 0
+        return 40
+
     def read(self, path: Path) -> CanonicalMemoryPackage:
         package = CanonicalMemoryPackage(package_id=path.name or "markdown-bundle", source_formats=[self.name])
         files = sorted(path.rglob("*.md")) if path.is_dir() else [path]
