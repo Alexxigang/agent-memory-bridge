@@ -9,6 +9,7 @@ from memory_migrate_plugin.core import normalize
 from memory_migrate_plugin.merge import merge_packages, merge_packages_detailed
 from memory_migrate_plugin.registry import detect_format
 from memory_migrate_plugin.report import build_merge_report, build_package_report
+from memory_migrate_plugin.suggest import build_package_suggestions
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -110,6 +111,38 @@ class MemoryMigrateTests(unittest.TestCase):
             report = build_merge_report([package_a, package_b], merge_result.package, merge_result.skipped_entries)
             self.assertEqual(report["merge_audit"]["skipped_entry_count"], 1)
             self.assertEqual(report["merge_audit"]["conflict_candidates"][0]["reason"], "duplicate-id")
+
+    def test_suggestions_include_proposed_values_for_missing_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(
+                json.dumps([
+                    {"id": "note-1", "kind": "", "title": "", "content": "Has content"}
+                ]),
+                encoding="utf-8",
+            )
+            package = normalize("generic-json", source)
+            suggestions = build_package_suggestions(package)
+            self.assertEqual(suggestions["suggestion_count"], 1)
+            self.assertEqual(suggestions["suggestions"][0]["proposed_values"]["kind"], "note")
+            self.assertEqual(suggestions["suggestions"][0]["proposed_values"]["title"], "Note 1")
+
+    def test_suggestions_include_duplicate_id_guidance(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(
+                json.dumps([
+                    {"id": "same-id", "kind": "note", "title": "A", "content": "one"},
+                    {"id": "same-id", "kind": "note", "title": "B", "content": "two"}
+                ]),
+                encoding="utf-8",
+            )
+            package = normalize("generic-json", source)
+            suggestions = build_package_suggestions(package)
+            duplicate_suggestions = [item for item in suggestions["suggestions"] if item["type"] == "duplicate-id"]
+            self.assertEqual(len(duplicate_suggestions), 1)
 
 
 if __name__ == "__main__":

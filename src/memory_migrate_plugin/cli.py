@@ -8,6 +8,7 @@ from memory_migrate_plugin.core import convert, export_canonical_json, normalize
 from memory_migrate_plugin.merge import merge_packages_detailed
 from memory_migrate_plugin.registry import build_registry, detect_format
 from memory_migrate_plugin.report import build_merge_report, build_package_report
+from memory_migrate_plugin.suggest import build_package_suggestions
 from memory_migrate_plugin.utils import write_json
 
 
@@ -47,6 +48,11 @@ def build_parser() -> argparse.ArgumentParser:
     report_parser.add_argument("--format")
     report_parser.add_argument("--input", required=True)
     report_parser.add_argument("--output")
+
+    suggest_parser = subparsers.add_parser("suggest", help="Generate repair suggestions for a source package.")
+    suggest_parser.add_argument("--format")
+    suggest_parser.add_argument("--input", required=True)
+    suggest_parser.add_argument("--output")
 
     return parser
 
@@ -131,6 +137,17 @@ def command_report(source_format: str | None, source_path: Path, output_path: st
     return 0
 
 
+def command_suggest(source_format: str | None, source_path: Path, output_path: str | None) -> int:
+    package = normalize(source_format, source_path)
+    suggestions = build_package_suggestions(package)
+    if output_path:
+        write_json(Path(output_path), suggestions)
+        print(f"Wrote suggestions to {output_path}")
+    else:
+        print(json.dumps(suggestions, indent=2, ensure_ascii=False))
+    return 0
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -149,6 +166,8 @@ def main() -> int:
         return command_merge(args.inputs, args.formats, Path(args.output), args.package_id, args.no_dedupe, args.report_output)
     if args.command == "report":
         return command_report(args.format, Path(args.input), args.output)
+    if args.command == "suggest":
+        return command_suggest(args.format, Path(args.input), args.output)
     parser.error("Unknown command")
     return 2
 

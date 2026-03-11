@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 - 2026-03-11
+
+- added suggest command for repair guidance
+- added proposed fallback values for missing canonical fields
+- added duplicate-id and duplicate-content remediation hints
+- expanded README and architecture docs for repair workflows
+
 ## 0.3.0 - 2026-03-11
 
 - added package report generation and audit summaries

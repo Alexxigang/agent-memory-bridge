@@ -24,7 +24,7 @@ The current architecture uses three ideas:
 
 1. A canonical memory package format (`CanonicalMemoryPackage`)
 2. Source and target adapters for each agent ecosystem
-3. A CLI that imports, inspects, auto-detects, normalizes, merges, audits, and exports memory
+3. A CLI that imports, inspects, auto-detects, normalizes, merges, audits, suggests repairs, and exports memory
 
 ## Current scope
 
@@ -42,6 +42,7 @@ Key capabilities:
 - fingerprint-based dedupe for obvious duplicates
 - deterministic JSON output for review and diffing
 - migration report generation with audit findings
+- repair suggestions for missing fields and duplicate patterns
 
 The architecture is intentionally adapter-first, so more products can be added without changing the core model.
 
@@ -95,7 +96,13 @@ Generate an audit report for a source:
 memory-migrate report --input ./dist/merged.json --output ./dist/report.json
 ```
 
-## Reports and audit
+Generate repair suggestions for a source:
+
+```bash
+memory-migrate suggest --input ./dist/merged.json --output ./dist/suggestions.json
+```
+
+## Reports and suggestions
 
 The report layer summarizes:
 
@@ -106,7 +113,13 @@ The report layer summarizes:
 - duplicate content fingerprints inside a package
 - merge-time skipped entries and likely conflict candidates
 
-This makes migration results explainable instead of opaque.
+The suggestion layer adds:
+
+- proposed fallback values for missing `id`, `kind`, or `title`
+- duplicate-id cleanup guidance
+- duplicate-content review guidance
+
+This makes migration results explainable and actionable instead of opaque.
 
 ## Canonical model
 
@@ -134,6 +147,7 @@ This is enough for a wide range of memory systems while staying easy to inspect 
 - `src/memory_migrate_plugin/core.py`: conversion pipeline
 - `src/memory_migrate_plugin/merge.py`: merge and dedupe logic
 - `src/memory_migrate_plugin/report.py`: reporting and audit logic
+- `src/memory_migrate_plugin/suggest.py`: repair suggestion logic
 - `src/memory_migrate_plugin/adapters/`: source and target adapters
 - `src/memory_migrate_plugin/cli.py`: command-line interface
 - `docs/architecture.md`: design and roadmap
@@ -148,6 +162,7 @@ This is enough for a wide range of memory systems while staying easy to inspect 
 - merge multiple memory inputs into one handoff package
 - generate target-specific output layouts
 - audit migration results for obvious issues
+- suggest likely repairs before export
 
 ### Hard but still doable later
 
