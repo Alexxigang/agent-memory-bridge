@@ -6,8 +6,9 @@ import unittest
 from pathlib import Path
 
 from memory_migrate_plugin.core import normalize
-from memory_migrate_plugin.merge import merge_packages
+from memory_migrate_plugin.merge import merge_packages, merge_packages_detailed
 from memory_migrate_plugin.registry import detect_format
+from memory_migrate_plugin.report import build_merge_report, build_package_report
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -79,6 +80,36 @@ class MemoryMigrateTests(unittest.TestCase):
             )
             package = normalize(None, source)
             self.assertEqual(package.entries[0].id, "note-1")
+
+    def test_build_package_report_flags_missing_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(
+                json.dumps([
+                    {"id": "note-1", "kind": "note", "title": "", "content": "Has content"}
+                ]),
+                encoding="utf-8",
+            )
+            package = normalize("generic-json", source)
+            report = build_package_report(package)
+            self.assertEqual(report["audit"]["issues_found"], 1)
+            self.assertEqual(report["audit"]["missing_required_fields"][0]["missing_fields"], ["title"])
+
+    def test_build_merge_report_includes_skipped_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source_a = root / "a.json"
+            source_b = root / "b.json"
+            entry = {"id": "pref-editor", "kind": "preference", "title": "Editor", "content": "Use Vim keybindings"}
+            source_a.write_text(json.dumps([entry]), encoding="utf-8")
+            source_b.write_text(json.dumps([entry]), encoding="utf-8")
+            package_a = normalize("generic-json", source_a)
+            package_b = normalize("generic-json", source_b)
+            merge_result = merge_packages_detailed([package_a, package_b])
+            report = build_merge_report([package_a, package_b], merge_result.package, merge_result.skipped_entries)
+            self.assertEqual(report["merge_audit"]["skipped_entry_count"], 1)
+            self.assertEqual(report["merge_audit"]["conflict_candidates"][0]["reason"], "duplicate-id")
 
 
 if __name__ == "__main__":

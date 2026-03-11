@@ -24,7 +24,7 @@ The current architecture uses three ideas:
 
 1. A canonical memory package format (`CanonicalMemoryPackage`)
 2. Source and target adapters for each agent ecosystem
-3. A CLI that imports, inspects, auto-detects, normalizes, merges, and exports memory
+3. A CLI that imports, inspects, auto-detects, normalizes, merges, audits, and exports memory
 
 ## Current scope
 
@@ -35,12 +35,13 @@ Supported adapters in this version:
 - `codex-memories`: import or export markdown memories compatible with a simple Codex-style memory folder layout
 - `cline-memory-bank`: import or export common Memory Bank markdown files used by Cline/Roo-style workflows
 
-Key v0.2 capabilities:
+Key capabilities:
 
 - auto-detect supported input formats
 - merge multiple memory sources into one canonical package
 - fingerprint-based dedupe for obvious duplicates
 - deterministic JSON output for review and diffing
+- migration report generation with audit findings
 
 The architecture is intentionally adapter-first, so more products can be added without changing the core model.
 
@@ -82,11 +83,30 @@ Convert from one format into another:
 memory-migrate convert --input ./memory-bank --to codex-memories --output ./dist/codex-memories
 ```
 
-Merge multiple sources into one canonical package:
+Merge multiple sources into one canonical package and emit a report:
 
 ```bash
-memory-migrate merge   --inputs ./memory-bank ./notes ./entries.json   --output ./dist/merged.json
+memory-migrate merge   --inputs ./memory-bank ./notes ./entries.json   --output ./dist/merged.json   --report-output ./dist/merge-report.json
 ```
+
+Generate an audit report for a source:
+
+```bash
+memory-migrate report --input ./dist/merged.json --output ./dist/report.json
+```
+
+## Reports and audit
+
+The report layer summarizes:
+
+- source formats and entry counts
+- entry kinds and top tags
+- missing required fields
+- duplicate ids inside a package
+- duplicate content fingerprints inside a package
+- merge-time skipped entries and likely conflict candidates
+
+This makes migration results explainable instead of opaque.
 
 ## Canonical model
 
@@ -113,6 +133,7 @@ This is enough for a wide range of memory systems while staying easy to inspect 
 - `src/memory_migrate_plugin/models.py`: canonical schema
 - `src/memory_migrate_plugin/core.py`: conversion pipeline
 - `src/memory_migrate_plugin/merge.py`: merge and dedupe logic
+- `src/memory_migrate_plugin/report.py`: reporting and audit logic
 - `src/memory_migrate_plugin/adapters/`: source and target adapters
 - `src/memory_migrate_plugin/cli.py`: command-line interface
 - `docs/architecture.md`: design and roadmap
@@ -126,6 +147,7 @@ This is enough for a wide range of memory systems while staying easy to inspect 
 - preserve tags, categories, provenance, and notes
 - merge multiple memory inputs into one handoff package
 - generate target-specific output layouts
+- audit migration results for obvious issues
 
 ### Hard but still doable later
 

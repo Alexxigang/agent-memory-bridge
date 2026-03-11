@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 - 2026-03-11
+
+- added package report generation and audit summaries
+- added merge report output with skipped entry reasons
+- added report CLI command
+- expanded tests for report and conflict visibility
+
 ## 0.2.0 - 2026-03-11
 
 - added source format auto-detection
