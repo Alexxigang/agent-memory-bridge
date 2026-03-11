@@ -24,7 +24,7 @@ The current architecture uses three ideas:
 
 1. A canonical memory package format (`CanonicalMemoryPackage`)
 2. Source and target adapters for each agent ecosystem
-3. A CLI that imports, inspects, auto-detects, normalizes, merges, audits, suggests repairs, auto-repairs, and exports memory
+3. A CLI that imports, inspects, auto-detects, normalizes, merges, audits, suggests repairs, auto-repairs, diagnoses, and exports memory
 
 ## Current scope
 
@@ -44,6 +44,7 @@ Key capabilities:
 - migration report generation with audit findings
 - repair suggestions for missing fields and duplicate patterns
 - safe repair output that writes a new canonical package instead of overwriting the source
+- doctor workflow that combines report, suggestions, and repair preview into one diagnosis
 
 The architecture is intentionally adapter-first, so more products can be added without changing the core model.
 
@@ -85,29 +86,31 @@ Convert from one format into another:
 memory-migrate convert --input ./memory-bank --to codex-memories --output ./dist/codex-memories
 ```
 
-Merge multiple sources into one canonical package and emit a report:
+Run a full doctor workflow:
 
 ```bash
-memory-migrate merge   --inputs ./memory-bank ./notes ./entries.json   --output ./dist/merged.json   --report-output ./dist/merge-report.json
-```
-
-Generate an audit report for a source:
-
-```bash
-memory-migrate report --input ./dist/merged.json --output ./dist/report.json
-```
-
-Generate repair suggestions for a source:
-
-```bash
-memory-migrate suggest --input ./dist/merged.json --output ./dist/suggestions.json
+memory-migrate doctor --input ./dist/merged.json --output ./dist/doctor.json
 ```
 
 Generate a repaired canonical package:
 
 ```bash
-memory-migrate repair   --input ./dist/merged.json   --output ./dist/merged.repaired.json   --report-output ./dist/repair-report.json
+memory-migrate repair \
+  --input ./dist/merged.json \
+  --output ./dist/merged.repaired.json \
+  --report-output ./dist/repair-report.json
 ```
+
+## Doctor workflow
+
+The `doctor` command combines:
+
+- a structural audit report
+- repair suggestions
+- a non-destructive repair preview
+- a simple health score for the current package
+
+This makes the CLI easier to use when you want one command that tells you what is wrong, what can be fixed, and what the repaired result would look like.
 
 ## Reports, suggestions, and repair
 
@@ -164,6 +167,7 @@ This is enough for a wide range of memory systems while staying easy to inspect 
 - `src/memory_migrate_plugin/report.py`: reporting and audit logic
 - `src/memory_migrate_plugin/suggest.py`: repair suggestion logic
 - `src/memory_migrate_plugin/repair.py`: safe auto-repair logic
+- `src/memory_migrate_plugin/doctor.py`: one-shot diagnosis workflow
 - `src/memory_migrate_plugin/adapters/`: source and target adapters
 - `src/memory_migrate_plugin/cli.py`: command-line interface
 - `docs/architecture.md`: design and roadmap
@@ -180,6 +184,7 @@ This is enough for a wide range of memory systems while staying easy to inspect 
 - audit migration results for obvious issues
 - suggest likely repairs before export
 - auto-repair common canonical issues into a new package
+- run a full doctor diagnosis in one command
 
 ### Hard but still doable later
 

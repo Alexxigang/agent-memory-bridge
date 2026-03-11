@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 - 2026-03-11
+
+- added doctor command for one-shot diagnosis
+- added health score, severity summary, and repair preview output
+- combined report, suggestions, and repaired post-check into one workflow
+- expanded docs for operator-friendly diagnosis flow
+
 ## 0.5.0 - 2026-03-11
 
 - added repair command for safe canonical package repair

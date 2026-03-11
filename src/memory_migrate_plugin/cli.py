@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from memory_migrate_plugin.core import convert, export_canonical_json, normalize
+from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.merge import merge_packages_detailed
 from memory_migrate_plugin.registry import build_registry, detect_format
 from memory_migrate_plugin.repair import repair_package
@@ -61,13 +62,18 @@ def build_parser() -> argparse.ArgumentParser:
     repair_parser.add_argument("--output", required=True)
     repair_parser.add_argument("--report-output")
 
+    doctor_parser = subparsers.add_parser("doctor", help="Run a full diagnosis workflow with report, suggestions, and repair preview.")
+    doctor_parser.add_argument("--format")
+    doctor_parser.add_argument("--input", required=True)
+    doctor_parser.add_argument("--output")
+
     return parser
 
 
 def command_adapters() -> int:
     registry = build_registry()
     for name, adapter in registry.items():
-        print(f"{name}	{adapter.description}")
+        print(f"{name}\t{adapter.description}")
     return 0
 
 
@@ -158,6 +164,17 @@ def command_repair(source_format: str | None, source_path: Path, output_path: Pa
     return 0
 
 
+def command_doctor(source_format: str | None, source_path: Path, output_path: str | None) -> int:
+    package = normalize(source_format, source_path)
+    doctor_report = build_doctor_report(package)
+    if output_path:
+        write_json(Path(output_path), doctor_report)
+        print(f"Wrote doctor report to {output_path}")
+    else:
+        print(json.dumps(doctor_report, indent=2, ensure_ascii=False))
+    return 0
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -180,6 +197,8 @@ def main() -> int:
         return command_suggest(args.format, Path(args.input), args.output)
     if args.command == "repair":
         return command_repair(args.format, Path(args.input), Path(args.output), args.report_output)
+    if args.command == "doctor":
+        return command_doctor(args.format, Path(args.input), args.output)
     parser.error("Unknown command")
     return 2
 

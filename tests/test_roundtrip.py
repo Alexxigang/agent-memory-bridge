@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from memory_migrate_plugin.core import normalize
+from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.merge import merge_packages, merge_packages_detailed
 from memory_migrate_plugin.registry import detect_format
 from memory_migrate_plugin.repair import repair_package
@@ -166,6 +167,25 @@ class MemoryMigrateTests(unittest.TestCase):
             self.assertEqual(repaired.entries[0].title, "Same Id")
             self.assertEqual(repaired.entries[0].kind, "note")
             self.assertEqual(summary["repaired_entry_count"], 3)
+
+    def test_doctor_report_combines_diagnosis_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(
+                json.dumps([
+                    {"id": "same-id", "kind": "", "title": "", "content": "Has content"},
+                    {"id": "same-id", "kind": "note", "title": "B", "content": "two"}
+                ]),
+                encoding="utf-8",
+            )
+            package = normalize("generic-json", source)
+            doctor = build_doctor_report(package)
+            self.assertIn("doctor_summary", doctor)
+            self.assertIn("report", doctor)
+            self.assertIn("suggestions", doctor)
+            self.assertIn("repair_preview", doctor)
+            self.assertGreaterEqual(doctor["doctor_summary"]["suggestion_count"], 1)
 
 
 if __name__ == "__main__":

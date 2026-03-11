@@ -11,7 +11,7 @@ This project solves that by introducing a portable intermediate memory layer.
 ```text
 source adapter -> canonical memory package -> target adapter
                               |
-                              +-> merge + dedupe + audit + reporting + suggestions + repair
+                              +-> merge + dedupe + audit + reporting + suggestions + repair + doctor
 ```
 
 The canonical layer is the contract.
@@ -56,19 +56,21 @@ Current dedupe behavior is intentionally conservative:
 
 The detailed merge result also records skipped entries so the CLI can emit an audit report.
 
-## Reporting, suggestions, and repair
+## Reporting, suggestions, repair, and doctor
 
 The report layer inspects canonical packages and merge results for explainability.
 The suggestion layer turns those findings into lightweight remediation guidance.
 The repair layer applies a safe subset of those fixes into a new package.
+The doctor layer orchestrates all three into one operator-friendly diagnosis.
 
-Current repair behavior:
+Current doctor output includes:
 
-- fill missing `title` from `id`
-- fill missing `kind` with `note`
-- generate missing `id` from title or content slug
-- fill missing `content` with a placeholder
-- append numeric suffixes to duplicate ids
+- health score
+- highest suggestion severity
+- issue count and repairable entry count
+- structural report
+- suggestions
+- repair preview with post-repair report
 
 ## MVP choices
 
@@ -78,6 +80,7 @@ Current repair behavior:
 - markdown-friendly exports for human editing
 - no network dependency for core migrations
 - repair always writes a new output file
+- doctor never mutates the input package
 
 ## Suggested next phases
 
