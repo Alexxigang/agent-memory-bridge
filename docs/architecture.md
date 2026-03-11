@@ -105,3 +105,8 @@ These adapters are still file-based and deterministic, which keeps migrations in
 ## Enhanced Memory Bank support
 
 The `cline-memory-bank` adapter now supports a wider standard file set, including `decisionLog.md` and `userContext.md`, while preserving slot metadata during normalization and export.
+
+
+## Export profiles
+
+The convert pipeline now supports profile-based transforms before adapter export. Current profiles include `default`, `developer-strict`, `project-handoff`, and `agent-rules`. These profiles adjust entry kinds, tags, and content framing to better match the target agent workflow.

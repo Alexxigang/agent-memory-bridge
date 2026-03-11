@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0 - 2026-03-12
+
+- added export profiles for target-style conversion behavior
+- added profiles command and convert --profile support
+- added developer-strict, project-handoff, and agent-rules presets
+
 ## 0.9.0 - 2026-03-11
 
 - expanded cline-memory-bank adapter with decision and user context files

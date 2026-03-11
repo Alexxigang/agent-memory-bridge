@@ -48,6 +48,7 @@ Key capabilities:
 - repair suggestions for missing fields and duplicate patterns
 - safe repair output that writes a new canonical package instead of overwriting the source
 - doctor workflow that combines report, suggestions, and repair preview into one diagnosis
+- profile-based export strategies for different target styles
 - adapters for Cursor rules, Claude project memory, and AGENTS.md collaboration bundles
 
 The architecture is intentionally adapter-first, so more products can be added without changing the core model.
@@ -88,6 +89,18 @@ Convert from one format into another:
 
 ```bash
 memory-migrate convert --input ./memory-bank --to codex-memories --output ./dist/codex-memories
+```
+
+List export profiles:
+
+```bash
+memory-migrate profiles
+```
+
+Convert with a target-style profile:
+
+```bash
+memory-migrate convert --input ./memory-bank --to cursor-rules --profile developer-strict --output ./dist/cursor-rules
 ```
 
 Run a full doctor workflow:

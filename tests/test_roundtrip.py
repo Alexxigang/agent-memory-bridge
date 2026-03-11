@@ -7,6 +7,7 @@ from pathlib import Path
 
 from memory_migrate_plugin.core import normalize
 from memory_migrate_plugin.doctor import build_doctor_report
+from memory_migrate_plugin.profiles import apply_profile
 from memory_migrate_plugin.merge import merge_packages, merge_packages_detailed
 from memory_migrate_plugin.registry import detect_format
 from memory_migrate_plugin.repair import repair_package
@@ -171,6 +172,41 @@ class MemoryMigrateTests(unittest.TestCase):
             )
             package = normalize(None, source)
             self.assertEqual(package.entries[0].id, "note-1")
+
+
+    def test_apply_profile_developer_strict_transforms_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(
+                json.dumps([
+                    {"id": "decision-1", "kind": "decision", "title": "DB", "content": "Use PostgreSQL"},
+                    {"id": "profile-1", "kind": "profile", "title": "Prefs", "content": "Concise answers"}
+                ]),
+                encoding="utf-8",
+            )
+            package = normalize("generic-json", source)
+            transformed = apply_profile(package, "developer-strict", "cursor-rules")
+            self.assertEqual(transformed.entries[0].kind, "reference")
+            self.assertEqual(transformed.entries[1].kind, "instruction")
+            self.assertIn("developer-strict", transformed.entries[0].tags)
+            self.assertTrue(transformed.entries[0].content.startswith("Technical reference:"))
+
+    def test_apply_profile_agent_rules_converts_to_instruction(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(
+                json.dumps([
+                    {"id": "project-1", "kind": "project", "title": "Proj", "content": "Keep CI green"}
+                ]),
+                encoding="utf-8",
+            )
+            package = normalize("generic-json", source)
+            transformed = apply_profile(package, "agent-rules", "agents-md")
+            self.assertEqual(transformed.entries[0].kind, "instruction")
+            self.assertIn("agent-rules", transformed.entries[0].tags)
+            self.assertTrue(transformed.entries[0].content.startswith("Rule context:"))
 
     def test_build_package_report_flags_missing_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

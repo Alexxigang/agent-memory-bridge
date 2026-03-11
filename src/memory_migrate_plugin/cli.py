@@ -7,6 +7,7 @@ from pathlib import Path
 from memory_migrate_plugin.core import convert, export_canonical_json, normalize
 from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.merge import merge_packages_detailed
+from memory_migrate_plugin.profiles import list_profiles
 from memory_migrate_plugin.registry import build_registry, detect_format
 from memory_migrate_plugin.repair import repair_package
 from memory_migrate_plugin.report import build_merge_report, build_package_report
@@ -19,6 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("adapters", help="List supported adapters.")
+    subparsers.add_parser("profiles", help="List supported export profiles.")
 
     detect_parser = subparsers.add_parser("detect", help="Detect the most likely source format for a path.")
     detect_parser.add_argument("--input", required=True)
@@ -37,6 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
     convert_parser.add_argument("--input", required=True)
     convert_parser.add_argument("--to", dest="target_format", required=True)
     convert_parser.add_argument("--output", required=True)
+    convert_parser.add_argument("--profile")
 
     merge_parser = subparsers.add_parser("merge", help="Merge multiple memory sources into one canonical package.")
     merge_parser.add_argument("--inputs", nargs="+", required=True)
@@ -77,6 +80,12 @@ def command_adapters() -> int:
     return 0
 
 
+def command_profiles() -> int:
+    for name, description in list_profiles().items():
+        print(f"{name}\t{description}")
+    return 0
+
+
 def command_detect(source_path: Path) -> int:
     matches = detect_format(source_path)
     if not matches:
@@ -106,9 +115,10 @@ def command_normalize(source_format: str | None, source_path: Path, output_path:
     return 0
 
 
-def command_convert(source_format: str | None, source_path: Path, target_format: str, output_path: Path) -> int:
-    package = convert(source_format, source_path, target_format, output_path)
-    print(f"Converted {len(package.entries)} entries to {target_format} at {output_path}")
+def command_convert(source_format: str | None, source_path: Path, target_format: str, output_path: Path, profile: str | None) -> int:
+    package = convert(source_format, source_path, target_format, output_path, profile=profile)
+    profile_label = profile or "default"
+    print(f"Converted {len(package.entries)} entries to {target_format} at {output_path} using profile {profile_label}")
     return 0
 
 
@@ -181,6 +191,8 @@ def main() -> int:
 
     if args.command == "adapters":
         return command_adapters()
+    if args.command == "profiles":
+        return command_profiles()
     if args.command == "detect":
         return command_detect(Path(args.input))
     if args.command == "inspect":
@@ -188,7 +200,7 @@ def main() -> int:
     if args.command == "normalize":
         return command_normalize(args.format, Path(args.input), Path(args.output))
     if args.command == "convert":
-        return command_convert(args.source_format, Path(args.input), args.target_format, Path(args.output))
+        return command_convert(args.source_format, Path(args.input), args.target_format, Path(args.output), args.profile)
     if args.command == "merge":
         return command_merge(args.inputs, args.formats, Path(args.output), args.package_id, args.no_dedupe, args.report_output)
     if args.command == "report":

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from memory_migrate_plugin.models import CanonicalMemoryPackage
+from memory_migrate_plugin.profiles import apply_profile
 from memory_migrate_plugin.registry import build_registry, detect_format
 from memory_migrate_plugin.utils import write_json
 
@@ -34,11 +35,13 @@ def convert(
     source_path: Path,
     target_format: str,
     target_path: Path,
+    profile: str | None = None,
 ) -> CanonicalMemoryPackage:
     package = normalize(source_format, source_path)
+    transformed_package = apply_profile(package, profile, target_format)
     target_adapter = get_adapter(target_format)
-    target_adapter.write(package, target_path)
-    return package
+    target_adapter.write(transformed_package, target_path)
+    return transformed_package
 
 
 def export_canonical_json(package: CanonicalMemoryPackage, target_path: Path) -> None:
