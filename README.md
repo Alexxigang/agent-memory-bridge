@@ -34,6 +34,8 @@ Supported adapters in this version:
 - `markdown-bundle`: import or export a folder of markdown memory notes
 - `codex-memories`: import or export markdown memories compatible with a simple Codex-style memory folder layout
 - `cline-memory-bank`: import or export common Memory Bank markdown files used by Cline/Roo-style workflows
+- `cursor-rules`: import or export Cursor-style `.cursor/rules/*.mdc` rule bundles
+- `claude-project`: import or export `CLAUDE.md` project memory plus companion notes
 
 Key capabilities:
 
@@ -45,6 +47,7 @@ Key capabilities:
 - repair suggestions for missing fields and duplicate patterns
 - safe repair output that writes a new canonical package instead of overwriting the source
 - doctor workflow that combines report, suggestions, and repair preview into one diagnosis
+- adapters for Cursor rules and Claude project memory layouts
 
 The architecture is intentionally adapter-first, so more products can be added without changing the core model.
 
@@ -168,7 +171,7 @@ This is enough for a wide range of memory systems while staying easy to inspect 
 - `src/memory_migrate_plugin/suggest.py`: repair suggestion logic
 - `src/memory_migrate_plugin/repair.py`: safe auto-repair logic
 - `src/memory_migrate_plugin/doctor.py`: one-shot diagnosis workflow
-- `src/memory_migrate_plugin/adapters/`: source and target adapters
+- `src/memory_migrate_plugin/adapters/`: source and target adapters, including Cursor and Claude project layouts
 - `src/memory_migrate_plugin/cli.py`: command-line interface
 - `docs/architecture.md`: design and roadmap
 

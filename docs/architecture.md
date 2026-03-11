@@ -89,3 +89,13 @@ Current doctor output includes:
 3. Add product-specific adapters for more agent ecosystems
 4. Add a small web UI for drag-and-drop migration
 5. Add signed package manifests and optional encryption
+
+
+## Ecosystem adapters
+
+The project now includes higher-value adapters for common developer workflows:
+
+- `cursor-rules`: reads and writes `.cursor/rules` instruction bundles
+- `claude-project`: reads and writes `CLAUDE.md` plus companion memory notes
+
+These adapters are still file-based and deterministic, which keeps migrations inspectable and easy to diff.

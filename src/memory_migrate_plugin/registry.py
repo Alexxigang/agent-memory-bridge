@@ -4,8 +4,10 @@ from pathlib import Path
 
 from memory_migrate_plugin.adapters import (
     BaseAdapter,
+    ClaudeProjectAdapter,
     ClineMemoryBankAdapter,
     CodexMemoriesAdapter,
+    CursorRulesAdapter,
     GenericJsonAdapter,
     MarkdownBundleAdapter,
 )
@@ -14,6 +16,8 @@ from memory_migrate_plugin.adapters import (
 def build_registry() -> dict[str, BaseAdapter]:
     adapters = [
         GenericJsonAdapter(),
+        ClaudeProjectAdapter(),
+        CursorRulesAdapter(),
         MarkdownBundleAdapter(),
         CodexMemoriesAdapter(),
         ClineMemoryBankAdapter(),

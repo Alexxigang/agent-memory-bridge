@@ -56,6 +56,50 @@ class MemoryMigrateTests(unittest.TestCase):
             matches = detect_format(source)
             self.assertEqual(matches[0][0], "cline-memory-bank")
 
+    def test_detect_format_prefers_cursor_rules(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            rules_dir = root / ".cursor" / "rules"
+            rules_dir.mkdir(parents=True)
+            (rules_dir / "python.mdc").write_text(
+                "---\ntitle: Python Rule\nalwaysApply: true\n---\n\nUse typed Python.",
+                encoding="utf-8",
+            )
+            matches = detect_format(root)
+            self.assertEqual(matches[0][0], "cursor-rules")
+
+    def test_detect_format_prefers_claude_project(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "CLAUDE.md").write_text("Project guidance", encoding="utf-8")
+            matches = detect_format(root)
+            self.assertEqual(matches[0][0], "claude-project")
+
+    def test_cursor_rules_adapter_reads_instruction_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            rules_dir = root / ".cursor" / "rules"
+            rules_dir.mkdir(parents=True)
+            (rules_dir / "backend.mdc").write_text(
+                "---\ntitle: Backend Rule\nglobs: src/**/*.py\n---\n\nPrefer services over scripts.",
+                encoding="utf-8",
+            )
+            package = normalize("cursor-rules", root)
+            self.assertEqual(len(package.entries), 1)
+            self.assertEqual(package.entries[0].kind, "instruction")
+            self.assertEqual(package.entries[0].metadata["globs"], "src/**/*.py")
+
+    def test_claude_project_adapter_reads_main_and_memory_notes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "CLAUDE.md").write_text("Main project memory", encoding="utf-8")
+            mem_dir = root / ".claude" / "memories"
+            mem_dir.mkdir(parents=True)
+            (mem_dir / "release-notes.md").write_text("Ship weekly.", encoding="utf-8")
+            package = normalize("claude-project", root)
+            self.assertEqual(len(package.entries), 2)
+            self.assertEqual(package.entries[0].title, "Claude Project Memory")
+
     def test_merge_packages_dedupes_duplicate_entries(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

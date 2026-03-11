@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 - 2026-03-11
+
+- added Cursor rules adapter for `.cursor/rules` bundles
+- added Claude project adapter for `CLAUDE.md` plus companion memories
+- improved auto-detection coverage for real workflow layouts
+- expanded docs and tests for new ecosystem adapters
+
 ## 0.6.0 - 2026-03-11
 
 - added doctor command for one-shot diagnosis
