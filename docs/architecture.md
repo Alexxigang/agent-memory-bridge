@@ -97,5 +97,6 @@ The project now includes higher-value adapters for common developer workflows:
 
 - `cursor-rules`: reads and writes `.cursor/rules` instruction bundles
 - `claude-project`: reads and writes `CLAUDE.md` plus companion memory notes
+- `agents-md`: reads and writes `AGENTS.md` plus `.agents/notes` collaboration bundles
 
 These adapters are still file-based and deterministic, which keeps migrations inspectable and easy to diff.

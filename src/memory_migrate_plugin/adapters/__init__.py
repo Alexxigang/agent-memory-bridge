@@ -1,3 +1,4 @@
+from .agents_md import AgentsMdAdapter
 from .base import BaseAdapter
 from .claude_project import ClaudeProjectAdapter
 from .cline_memory_bank import ClineMemoryBankAdapter
@@ -14,4 +15,5 @@ __all__ = [
     "ClineMemoryBankAdapter",
     "CursorRulesAdapter",
     "ClaudeProjectAdapter",
+    "AgentsMdAdapter",
 ]

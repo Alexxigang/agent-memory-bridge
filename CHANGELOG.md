@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 - 2026-03-11
+
+- added AGENTS.md adapter for multi-agent instruction bundles
+- added detection and export for `.agents/notes` companion files
+- expanded docs and tests for AGENTS.md workflow support
+
 ## 0.7.0 - 2026-03-11
 
 - added Cursor rules adapter for `.cursor/rules` bundles

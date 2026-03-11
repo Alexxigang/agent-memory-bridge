@@ -68,6 +68,25 @@ class MemoryMigrateTests(unittest.TestCase):
             matches = detect_format(root)
             self.assertEqual(matches[0][0], "cursor-rules")
 
+
+    def test_detect_format_prefers_agents_md(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "AGENTS.md").write_text("Agent workflow instructions", encoding="utf-8")
+            matches = detect_format(root)
+            self.assertEqual(matches[0][0], "agents-md")
+
+    def test_agents_md_adapter_reads_main_and_notes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "AGENTS.md").write_text("Agent workflow instructions", encoding="utf-8")
+            notes_dir = root / ".agents" / "notes"
+            notes_dir.mkdir(parents=True)
+            (notes_dir / "handoff.md").write_text("Remember deployment handoff.", encoding="utf-8")
+            package = normalize("agents-md", root)
+            self.assertEqual(len(package.entries), 2)
+            self.assertEqual(package.entries[0].title, "AGENTS Instructions")
+
     def test_detect_format_prefers_claude_project(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

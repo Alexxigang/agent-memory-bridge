@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from memory_migrate_plugin.adapters import (
+    AgentsMdAdapter,
     BaseAdapter,
     ClaudeProjectAdapter,
     ClineMemoryBankAdapter,
@@ -16,6 +17,7 @@ from memory_migrate_plugin.adapters import (
 def build_registry() -> dict[str, BaseAdapter]:
     adapters = [
         GenericJsonAdapter(),
+        AgentsMdAdapter(),
         ClaudeProjectAdapter(),
         CursorRulesAdapter(),
         MarkdownBundleAdapter(),
