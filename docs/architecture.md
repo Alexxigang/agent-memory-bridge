@@ -11,7 +11,7 @@ This project solves that by introducing a portable intermediate memory layer.
 ```text
 source adapter -> canonical memory package -> target adapter
                               |
-                              +-> merge + dedupe + audit + reporting + suggestions
+                              +-> merge + dedupe + audit + reporting + suggestions + repair
 ```
 
 The canonical layer is the contract.
@@ -56,20 +56,19 @@ Current dedupe behavior is intentionally conservative:
 
 The detailed merge result also records skipped entries so the CLI can emit an audit report.
 
-## Reporting and suggestions
+## Reporting, suggestions, and repair
 
 The report layer inspects canonical packages and merge results for explainability.
 The suggestion layer turns those findings into lightweight remediation guidance.
+The repair layer applies a safe subset of those fixes into a new package.
 
-Current checks and suggestions:
+Current repair behavior:
 
-- package-level counts by kind and source format
-- top tags
-- missing required fields
-- duplicate ids within a package
-- duplicate content fingerprints within a package
-- merge-time skipped entries grouped by reason
-- proposed fallback values for missing ids, kinds, and titles
+- fill missing `title` from `id`
+- fill missing `kind` with `note`
+- generate missing `id` from title or content slug
+- fill missing `content` with a placeholder
+- append numeric suffixes to duplicate ids
 
 ## MVP choices
 
@@ -78,6 +77,7 @@ Current checks and suggestions:
 - deterministic JSON output for easy diffing
 - markdown-friendly exports for human editing
 - no network dependency for core migrations
+- repair always writes a new output file
 
 ## Suggested next phases
 

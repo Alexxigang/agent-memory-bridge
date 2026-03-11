@@ -7,6 +7,7 @@ from pathlib import Path
 from memory_migrate_plugin.core import convert, export_canonical_json, normalize
 from memory_migrate_plugin.merge import merge_packages_detailed
 from memory_migrate_plugin.registry import build_registry, detect_format
+from memory_migrate_plugin.repair import repair_package
 from memory_migrate_plugin.report import build_merge_report, build_package_report
 from memory_migrate_plugin.suggest import build_package_suggestions
 from memory_migrate_plugin.utils import write_json
@@ -54,6 +55,12 @@ def build_parser() -> argparse.ArgumentParser:
     suggest_parser.add_argument("--input", required=True)
     suggest_parser.add_argument("--output")
 
+    repair_parser = subparsers.add_parser("repair", help="Generate a repaired canonical package without overwriting the source.")
+    repair_parser.add_argument("--format")
+    repair_parser.add_argument("--input", required=True)
+    repair_parser.add_argument("--output", required=True)
+    repair_parser.add_argument("--report-output")
+
     return parser
 
 
@@ -99,14 +106,7 @@ def command_convert(source_format: str | None, source_path: Path, target_format:
     return 0
 
 
-def command_merge(
-    inputs: list[str],
-    formats: list[str] | None,
-    output: Path,
-    package_id: str,
-    no_dedupe: bool,
-    report_output: str | None,
-) -> int:
+def command_merge(inputs: list[str], formats: list[str] | None, output: Path, package_id: str, no_dedupe: bool, report_output: str | None) -> int:
     resolved_formats = formats or []
     if resolved_formats and len(resolved_formats) != len(inputs):
         raise SystemExit("--formats must match the number of --inputs when provided")
@@ -148,6 +148,16 @@ def command_suggest(source_format: str | None, source_path: Path, output_path: s
     return 0
 
 
+def command_repair(source_format: str | None, source_path: Path, output_path: Path, report_output: str | None) -> int:
+    package = normalize(source_format, source_path)
+    repaired_package, repair_summary = repair_package(package)
+    export_canonical_json(repaired_package, output_path)
+    if report_output:
+        write_json(Path(report_output), repair_summary)
+    print(f"Wrote repaired package to {output_path} with {repair_summary['repaired_entry_count']} repaired entries")
+    return 0
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -168,6 +178,8 @@ def main() -> int:
         return command_report(args.format, Path(args.input), args.output)
     if args.command == "suggest":
         return command_suggest(args.format, Path(args.input), args.output)
+    if args.command == "repair":
+        return command_repair(args.format, Path(args.input), Path(args.output), args.report_output)
     parser.error("Unknown command")
     return 2
 

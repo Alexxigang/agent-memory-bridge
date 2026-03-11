@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 - 2026-03-11
+
+- added repair command for safe canonical package repair
+- added automatic fixes for missing title, kind, id, and content
+- added duplicate id renaming with numeric suffixes
+- added repair report output for traceability
+
 ## 0.4.0 - 2026-03-11
 
 - added suggest command for repair guidance

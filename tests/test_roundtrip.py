@@ -8,6 +8,7 @@ from pathlib import Path
 from memory_migrate_plugin.core import normalize
 from memory_migrate_plugin.merge import merge_packages, merge_packages_detailed
 from memory_migrate_plugin.registry import detect_format
+from memory_migrate_plugin.repair import repair_package
 from memory_migrate_plugin.report import build_merge_report, build_package_report
 from memory_migrate_plugin.suggest import build_package_suggestions
 
@@ -143,6 +144,28 @@ class MemoryMigrateTests(unittest.TestCase):
             suggestions = build_package_suggestions(package)
             duplicate_suggestions = [item for item in suggestions["suggestions"] if item["type"] == "duplicate-id"]
             self.assertEqual(len(duplicate_suggestions), 1)
+
+    def test_repair_package_fixes_missing_fields_and_duplicate_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(
+                json.dumps([
+                    {"id": "same-id", "kind": "", "title": "", "content": "Has content"},
+                    {"id": "same-id", "kind": "note", "title": "B", "content": "two"},
+                    {"id": "", "kind": "note", "title": "Needs Id", "content": "three"}
+                ]),
+                encoding="utf-8",
+            )
+            package = normalize("generic-json", source)
+            repaired, summary = repair_package(package)
+            ids = [entry.id for entry in repaired.entries]
+            self.assertEqual(ids[0], "same-id")
+            self.assertEqual(ids[1], "same-id-2")
+            self.assertEqual(ids[2], "needs-id")
+            self.assertEqual(repaired.entries[0].title, "Same Id")
+            self.assertEqual(repaired.entries[0].kind, "note")
+            self.assertEqual(summary["repaired_entry_count"], 3)
 
 
 if __name__ == "__main__":

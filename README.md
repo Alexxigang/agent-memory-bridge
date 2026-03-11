@@ -24,7 +24,7 @@ The current architecture uses three ideas:
 
 1. A canonical memory package format (`CanonicalMemoryPackage`)
 2. Source and target adapters for each agent ecosystem
-3. A CLI that imports, inspects, auto-detects, normalizes, merges, audits, suggests repairs, and exports memory
+3. A CLI that imports, inspects, auto-detects, normalizes, merges, audits, suggests repairs, auto-repairs, and exports memory
 
 ## Current scope
 
@@ -43,6 +43,7 @@ Key capabilities:
 - deterministic JSON output for review and diffing
 - migration report generation with audit findings
 - repair suggestions for missing fields and duplicate patterns
+- safe repair output that writes a new canonical package instead of overwriting the source
 
 The architecture is intentionally adapter-first, so more products can be added without changing the core model.
 
@@ -102,7 +103,13 @@ Generate repair suggestions for a source:
 memory-migrate suggest --input ./dist/merged.json --output ./dist/suggestions.json
 ```
 
-## Reports and suggestions
+Generate a repaired canonical package:
+
+```bash
+memory-migrate repair   --input ./dist/merged.json   --output ./dist/merged.repaired.json   --report-output ./dist/repair-report.json
+```
+
+## Reports, suggestions, and repair
 
 The report layer summarizes:
 
@@ -118,6 +125,14 @@ The suggestion layer adds:
 - proposed fallback values for missing `id`, `kind`, or `title`
 - duplicate-id cleanup guidance
 - duplicate-content review guidance
+
+The repair layer can then:
+
+- fill missing `title` from `id`
+- fill missing `kind` with `note`
+- generate missing `id` from a slugified title
+- fill missing `content` with a clear placeholder
+- rename duplicate ids with numeric suffixes
 
 This makes migration results explainable and actionable instead of opaque.
 
@@ -148,6 +163,7 @@ This is enough for a wide range of memory systems while staying easy to inspect 
 - `src/memory_migrate_plugin/merge.py`: merge and dedupe logic
 - `src/memory_migrate_plugin/report.py`: reporting and audit logic
 - `src/memory_migrate_plugin/suggest.py`: repair suggestion logic
+- `src/memory_migrate_plugin/repair.py`: safe auto-repair logic
 - `src/memory_migrate_plugin/adapters/`: source and target adapters
 - `src/memory_migrate_plugin/cli.py`: command-line interface
 - `docs/architecture.md`: design and roadmap
@@ -163,6 +179,7 @@ This is enough for a wide range of memory systems while staying easy to inspect 
 - generate target-specific output layouts
 - audit migration results for obvious issues
 - suggest likely repairs before export
+- auto-repair common canonical issues into a new package
 
 ### Hard but still doable later
 
