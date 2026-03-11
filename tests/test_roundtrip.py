@@ -56,6 +56,31 @@ class MemoryMigrateTests(unittest.TestCase):
             matches = detect_format(source)
             self.assertEqual(matches[0][0], "cline-memory-bank")
 
+
+    def test_cline_memory_bank_reads_extended_standard_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "memory-bank"
+            source.mkdir()
+            (source / "projectbrief.md").write_text("Project overview", encoding="utf-8")
+            (source / "decisionLog.md").write_text("Use PostgreSQL", encoding="utf-8")
+            (source / "userContext.md").write_text("Prefers concise responses", encoding="utf-8")
+            package = normalize("cline-memory-bank", source)
+            kinds = sorted(entry.kind for entry in package.entries)
+            self.assertEqual(kinds, ["decision", "profile", "project"])
+            decision_entry = next(entry for entry in package.entries if entry.kind == "decision")
+            self.assertEqual(decision_entry.metadata["filename"], "decisionLog.md")
+
+    def test_cline_memory_bank_detects_extended_layout_with_high_confidence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir) / "memory-bank"
+            root.mkdir()
+            for name in ["projectbrief.md", "activeContext.md", "decisionLog.md", "userContext.md"]:
+                (root / name).write_text(name, encoding="utf-8")
+            matches = detect_format(root)
+            self.assertEqual(matches[0][0], "cline-memory-bank")
+            self.assertGreaterEqual(matches[0][1], 99)
+
     def test_detect_format_prefers_cursor_rules(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

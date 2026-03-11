@@ -33,7 +33,7 @@ Supported adapters in this version:
 - `generic-json`: import or export canonical-friendly JSON files
 - `markdown-bundle`: import or export a folder of markdown memory notes
 - `codex-memories`: import or export markdown memories compatible with a simple Codex-style memory folder layout
-- `cline-memory-bank`: import or export common Memory Bank markdown files used by Cline/Roo-style workflows
+- `cline-memory-bank`: import or export common Memory Bank markdown files used by Cline/Roo-style workflows, including extended files like `decisionLog.md` and `userContext.md`
 - `cursor-rules`: import or export Cursor-style `.cursor/rules/*.mdc` rule bundles
 - `claude-project`: import or export `CLAUDE.md` project memory plus companion notes
 - `agents-md`: import or export `AGENTS.md` plus `.agents/notes/*.md` collaboration bundles

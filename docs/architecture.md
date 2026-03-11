@@ -100,3 +100,8 @@ The project now includes higher-value adapters for common developer workflows:
 - `agents-md`: reads and writes `AGENTS.md` plus `.agents/notes` collaboration bundles
 
 These adapters are still file-based and deterministic, which keeps migrations inspectable and easy to diff.
+
+
+## Enhanced Memory Bank support
+
+The `cline-memory-bank` adapter now supports a wider standard file set, including `decisionLog.md` and `userContext.md`, while preserving slot metadata during normalization and export.

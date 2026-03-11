@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 - 2026-03-11
+
+- expanded cline-memory-bank adapter with decision and user context files
+- improved Memory Bank detection confidence for richer Roo/Cline layouts
+- preserved standard slot metadata during normalization and export
+
 ## 0.8.0 - 2026-03-11
 
 - added AGENTS.md adapter for multi-agent instruction bundles
