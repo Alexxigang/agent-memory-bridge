@@ -120,3 +120,8 @@ The bundle pipeline is an operator-facing shortcut that writes a full migration 
 ## Compare workflow
 
 The compare layer reports added, removed, and changed canonical entries between two stages. It is especially useful for understanding how repair and export profiles changed entry kinds, titles, tags, content framing, and metadata.
+
+
+## Manifest and hashes
+
+Bundle outputs now include a `manifest.json` file that records SHA256 hashes and byte sizes for every artifact (excluding the manifest itself). This supports audits, sharing, and reproducible handoffs.

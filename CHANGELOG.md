@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0 - 2026-03-12
+
+- added manifest command for SHA256 bundle auditing
+- bundle now emits manifest.json for all artifacts
+- improved test coverage for manifest output
+
 ## 0.12.0 - 2026-03-12
 
 - added compare command for canonical stage diffs

@@ -9,6 +9,7 @@ from memory_migrate_plugin.compare import compare_packages
 from memory_migrate_plugin.core import convert, export_canonical_json, normalize
 from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.merge import merge_packages_detailed
+from memory_migrate_plugin.manifest import build_manifest
 from memory_migrate_plugin.models import CanonicalMemoryPackage
 from memory_migrate_plugin.profiles import list_profiles
 from memory_migrate_plugin.registry import build_registry, detect_format
@@ -56,6 +57,10 @@ def build_parser() -> argparse.ArgumentParser:
     compare_parser.add_argument("--before", required=True)
     compare_parser.add_argument("--after", required=True)
     compare_parser.add_argument("--output")
+
+    manifest_parser = subparsers.add_parser("manifest", help="Generate a manifest with SHA256 hashes for a bundle directory.")
+    manifest_parser.add_argument("--root", required=True)
+    manifest_parser.add_argument("--output")
 
     merge_parser = subparsers.add_parser("merge", help="Merge multiple memory sources into one canonical package.")
     merge_parser.add_argument("--inputs", nargs="+", required=True)
@@ -161,6 +166,16 @@ def command_compare(before_path: Path, after_path: Path, output_path: str | None
     return 0
 
 
+def command_manifest(root: Path, output_path: str | None) -> int:
+    manifest = build_manifest(root, exclude={root / "manifest.json"} if root.is_dir() else set())
+    if output_path:
+        write_json(Path(output_path), manifest)
+        print(f"Wrote manifest to {output_path}")
+    else:
+        print(json.dumps(manifest, indent=2, ensure_ascii=False))
+    return 0
+
+
 def command_merge(inputs: list[str], formats: list[str] | None, output: Path, package_id: str, no_dedupe: bool, report_output: str | None) -> int:
     resolved_formats = formats or []
     if resolved_formats and len(resolved_formats) != len(inputs):
@@ -244,6 +259,8 @@ def main() -> int:
         return command_bundle(args.source_format, Path(args.input), args.target_format, Path(args.output_dir), args.profile, args.no_repair)
     if args.command == "compare":
         return command_compare(Path(args.before), Path(args.after), args.output)
+    if args.command == "manifest":
+        return command_manifest(Path(args.root), args.output)
     if args.command == "merge":
         return command_merge(args.inputs, args.formats, Path(args.output), args.package_id, args.no_dedupe, args.report_output)
     if args.command == "report":

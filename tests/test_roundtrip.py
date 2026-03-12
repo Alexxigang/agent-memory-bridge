@@ -213,8 +213,12 @@ class MemoryMigrateTests(unittest.TestCase):
             self.assertTrue((output_dir / "canonical.transformed.json").exists())
             self.assertTrue((output_dir / "doctor.json").exists())
             self.assertTrue((output_dir / "compare.json").exists())
+            self.assertTrue((output_dir / "manifest.json").exists())
             self.assertTrue((output_dir / "bundle-summary.json").exists())
             self.assertTrue((output_dir / "exported" / "AGENTS.md").exists())
+            manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+            manifest_paths = {item["path"] for item in manifest["files"]}
+            self.assertIn("canonical.json", manifest_paths)
             self.assertEqual(summary["output"]["profile"], "agent-rules")
 
     def test_apply_profile_developer_strict_transforms_entries(self) -> None:

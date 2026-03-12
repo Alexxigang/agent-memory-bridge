@@ -117,6 +117,17 @@ Run a one-shot bundle workflow:
 memory-migrate bundle --input ./memory-bank --to agents-md --profile agent-rules --output-dir ./dist/bundle
 ```
 
+The bundle workspace contains:
+
+- `canonical.json`
+- `canonical.repaired.json` (if repair enabled)
+- `canonical.transformed.json`
+- `doctor.json`
+- `compare.json`
+- `manifest.json` (SHA256 audit)
+- `bundle-summary.json`
+- `exported/`
+
 Compare two canonical stages:
 
 ```bash
