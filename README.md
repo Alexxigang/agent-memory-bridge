@@ -55,6 +55,10 @@ Key capabilities:
 
 The architecture is intentionally adapter-first, so more products can be added without changing the core model.
 
+## CI
+
+GitHub Actions runs unit tests plus a CLI smoke test for `bundle` and `verify` on pushes and pull requests.
+
 ## Installation
 
 ```bash

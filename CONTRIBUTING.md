@@ -28,3 +28,7 @@ Please include:
 - example input/output shape
 - any migration edge cases or limitations
 - tests that cover the new behavior
+
+## Continuous integration
+
+Pull requests are validated by GitHub Actions on Python 3.11 and 3.12. The workflow runs unit tests and a small end-to-end CLI smoke test.

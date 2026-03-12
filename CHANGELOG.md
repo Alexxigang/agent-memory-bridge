@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.17.0 - 2026-03-12
+
+- added GitHub Actions CI for tests and CLI smoke checks
+- CI now validates bundle and verify workflows on push and pull request
+
 ## 0.16.0 - 2026-03-12
 
 - added release command for bundle plus release-note generation

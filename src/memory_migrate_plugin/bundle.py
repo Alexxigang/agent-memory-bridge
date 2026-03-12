@@ -84,14 +84,15 @@ def run_bundle(
         "zip_path": str(zip_output) if zip_output else None,
         "zip_sha256": None,
     }
-    write_json(output_dir / "bundle-summary.json", bundle_summary)
+    bundle_summary_path = output_dir / "bundle-summary.json"
+    write_json(bundle_summary_path, bundle_summary)
 
-    manifest = build_manifest(output_dir, exclude={manifest_path})
+    manifest = build_manifest(output_dir, exclude={manifest_path, bundle_summary_path})
     write_json(manifest_path, manifest)
 
     if zip_output:
         zip_dir(output_dir, zip_output)
         bundle_summary["zip_sha256"] = sha256_file(zip_output)
-        write_json(output_dir / "bundle-summary.json", bundle_summary)
+        write_json(bundle_summary_path, bundle_summary)
 
     return bundle_summary
