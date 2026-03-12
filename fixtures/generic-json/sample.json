@@ -1,0 +1,23 @@
+[
+  {
+    "id": "pref-editor",
+    "kind": "preference",
+    "title": "Editor Preference",
+    "content": "Use Vim keybindings when available.",
+    "tags": ["developer", "editor"]
+  },
+  {
+    "id": "project-api",
+    "kind": "project",
+    "title": "API Project",
+    "content": "Primary stack is Python, FastAPI, and PostgreSQL.",
+    "tags": ["backend", "api"]
+  },
+  {
+    "id": "decision-auth",
+    "kind": "decision",
+    "title": "Auth Decision",
+    "content": "Use GitHub OAuth for the first release.",
+    "tags": ["auth", "decision"]
+  }
+]

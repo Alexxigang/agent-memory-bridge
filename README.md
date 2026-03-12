@@ -59,6 +59,10 @@ The architecture is intentionally adapter-first, so more products can be added w
 
 GitHub Actions runs unit tests plus a CLI smoke test for `bundle` and `verify` on pushes and pull requests.
 
+## Fixtures
+
+Official sample inputs live in `fixtures/`. See `docs/demo.md` for reproducible walkthroughs using the included demo data.
+
 ## Installation
 
 ```bash

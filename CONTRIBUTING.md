@@ -32,3 +32,7 @@ Please include:
 ## Continuous integration
 
 Pull requests are validated by GitHub Actions on Python 3.11 and 3.12. The workflow runs unit tests and a small end-to-end CLI smoke test.
+
+## Fixtures and demos
+
+When adding a new adapter or workflow, prefer adding or updating a sample under `fixtures/` and documenting a reproducible command in `docs/demo.md`.

@@ -107,6 +107,19 @@ class MemoryMigrateTests(unittest.TestCase):
             matches = detect_format(root)
             self.assertEqual(matches[0][0], "agents-md")
 
+
+    def test_official_fixtures_are_detectable(self) -> None:
+        fixtures = {
+            "fixtures/generic-json/sample.json": "generic-json",
+            "fixtures/cline-memory-bank": "cline-memory-bank",
+            "fixtures/agents-md": "agents-md",
+            "fixtures/cursor-rules": "cursor-rules",
+            "fixtures/claude-project": "claude-project",
+        }
+        for raw_path, expected in fixtures.items():
+            matches = detect_format(Path(raw_path))
+            self.assertEqual(matches[0][0], expected)
+
     def test_agents_md_adapter_reads_main_and_notes(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

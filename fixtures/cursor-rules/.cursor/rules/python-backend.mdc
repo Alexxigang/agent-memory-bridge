@@ -1,0 +1,7 @@
+---
+title: Python Backend Rule
+alwaysApply: true
+globs: src/**/*.py
+---
+
+Prefer typed service modules over large script files.

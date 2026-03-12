@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.0 - 2026-03-13
+
+- added official fixtures for generic JSON, Cline/Roo, AGENTS.md, Cursor, and Claude layouts
+- added demo guide with reproducible CLI walkthroughs
+- documented fixture usage for contributors and demos
+
 ## 0.17.0 - 2026-03-12
 
 - added GitHub Actions CI for tests and CLI smoke checks
