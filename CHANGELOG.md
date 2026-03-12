@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.0 - 2026-03-12
+
+- added bundle --zip option for shareable migration artifacts
+- bundle summary now includes zip sha256 for integrity checks
+
 ## 0.14.0 - 2026-03-12
 
 - added verify command for manifest-based integrity checks

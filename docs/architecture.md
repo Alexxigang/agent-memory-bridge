@@ -130,3 +130,8 @@ Bundle outputs now include a `manifest.json` file that records SHA256 hashes and
 ## Verify workflow
 
 The verify layer re-computes SHA256 hashes for a bundle directory using `manifest.json` and reports missing or modified artifacts. This enables integrity checks after sharing or archival.
+
+
+## Bundle zip
+
+The bundle workflow can optionally create a zip archive of the output directory. The SHA256 of the zip is recorded in the bundle summary for distribution and later verification.

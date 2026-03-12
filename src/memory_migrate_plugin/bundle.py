@@ -6,7 +6,8 @@ from typing import Any
 from memory_migrate_plugin.compare import compare_bundle_stages
 from memory_migrate_plugin.core import export_canonical_json, normalize
 from memory_migrate_plugin.doctor import build_doctor_report
-from memory_migrate_plugin.manifest import build_manifest
+from memory_migrate_plugin.manifest import build_manifest, sha256_file
+from memory_migrate_plugin.ziputil import zip_dir
 from memory_migrate_plugin.models import CanonicalMemoryPackage
 from memory_migrate_plugin.profiles import apply_profile
 from memory_migrate_plugin.registry import build_registry
@@ -21,6 +22,7 @@ def run_bundle(
     output_dir: Path,
     profile: str | None = None,
     apply_repair: bool = True,
+    zip_output: Path | None = None,
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -79,10 +81,17 @@ def run_bundle(
         "repair_applied": apply_repair,
         "repair_summary": repair_summary,
         "export_entry_count": len(transformed_package.entries),
+        "zip_path": str(zip_output) if zip_output else None,
+        "zip_sha256": None,
     }
     write_json(output_dir / "bundle-summary.json", bundle_summary)
 
     manifest = build_manifest(output_dir, exclude={manifest_path})
     write_json(manifest_path, manifest)
+
+    if zip_output:
+        zip_dir(output_dir, zip_output)
+        bundle_summary["zip_sha256"] = sha256_file(zip_output)
+        write_json(output_dir / "bundle-summary.json", bundle_summary)
 
     return bundle_summary

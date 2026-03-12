@@ -114,7 +114,7 @@ memory-migrate doctor --input ./dist/merged.json --output ./dist/doctor.json
 Run a one-shot bundle workflow:
 
 ```bash
-memory-migrate bundle --input ./memory-bank --to agents-md --profile agent-rules --output-dir ./dist/bundle
+memory-migrate bundle --input ./memory-bank --to agents-md --profile agent-rules --output-dir ./dist/bundle --zip ./dist/bundle.zip
 ```
 
 The bundle workspace contains:

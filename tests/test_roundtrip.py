@@ -212,6 +212,19 @@ class MemoryMigrateTests(unittest.TestCase):
             self.assertFalse(report_bad["ok"])
             self.assertEqual(report_bad["mismatch_count"], 1)
 
+    def test_run_bundle_can_create_zip_archive(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(json.dumps([{
+                "id": "same-id", "kind": "note", "title": "T", "content": "C"
+            }]), encoding="utf-8")
+            output_dir = root / "bundle-out"
+            zip_path = root / "bundle.zip"
+            summary = run_bundle(source, "generic-json", "agents-md", output_dir, profile="agent-rules", apply_repair=False, zip_output=zip_path)
+            self.assertTrue(zip_path.exists())
+            self.assertIsNotNone(summary["zip_sha256"])
+
     def test_run_bundle_creates_expected_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
