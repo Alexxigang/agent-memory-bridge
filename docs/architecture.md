@@ -115,3 +115,8 @@ The convert pipeline now supports profile-based transforms before adapter export
 ## Bundle workflow
 
 The bundle pipeline is an operator-facing shortcut that writes a full migration workspace: original canonical package, repaired package, transformed package, doctor report, exported target files, and a bundle summary manifest.
+
+
+## Compare workflow
+
+The compare layer reports added, removed, and changed canonical entries between two stages. It is especially useful for understanding how repair and export profiles changed entry kinds, titles, tags, content framing, and metadata.

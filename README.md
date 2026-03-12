@@ -50,6 +50,7 @@ Key capabilities:
 - doctor workflow that combines report, suggestions, and repair preview into one diagnosis
 - profile-based export strategies for different target styles
 - bundle workflow for one-command diagnosis, repair, and export
+- compare workflow for stage-to-stage diff inspection
 - adapters for Cursor rules, Claude project memory, and AGENTS.md collaboration bundles
 
 The architecture is intentionally adapter-first, so more products can be added without changing the core model.
@@ -114,6 +115,12 @@ Run a one-shot bundle workflow:
 
 ```bash
 memory-migrate bundle --input ./memory-bank --to agents-md --profile agent-rules --output-dir ./dist/bundle
+```
+
+Compare two canonical stages:
+
+```bash
+memory-migrate compare --before ./dist/bundle/canonical.json --after ./dist/bundle/canonical.repaired.json --output ./dist/compare.json
 ```
 
 Generate a repaired canonical package:

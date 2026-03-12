@@ -5,9 +5,11 @@ import json
 from pathlib import Path
 
 from memory_migrate_plugin.bundle import run_bundle
+from memory_migrate_plugin.compare import compare_packages
 from memory_migrate_plugin.core import convert, export_canonical_json, normalize
 from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.merge import merge_packages_detailed
+from memory_migrate_plugin.models import CanonicalMemoryPackage
 from memory_migrate_plugin.profiles import list_profiles
 from memory_migrate_plugin.registry import build_registry, detect_format
 from memory_migrate_plugin.repair import repair_package
@@ -50,6 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
     bundle_parser.add_argument("--profile")
     bundle_parser.add_argument("--no-repair", action="store_true")
 
+    compare_parser = subparsers.add_parser("compare", help="Compare two canonical packages and report differences.")
+    compare_parser.add_argument("--before", required=True)
+    compare_parser.add_argument("--after", required=True)
+    compare_parser.add_argument("--output")
+
     merge_parser = subparsers.add_parser("merge", help="Merge multiple memory sources into one canonical package.")
     merge_parser.add_argument("--inputs", nargs="+", required=True)
     merge_parser.add_argument("--formats", nargs="*")
@@ -80,6 +87,11 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_parser.add_argument("--output")
 
     return parser
+
+
+def load_canonical_package(path: Path) -> CanonicalMemoryPackage:
+    data = json.loads(path.read_text(encoding="utf-8-sig"))
+    return CanonicalMemoryPackage.from_dict(data)
 
 
 def command_adapters() -> int:
@@ -134,6 +146,18 @@ def command_convert(source_format: str | None, source_path: Path, target_format:
 def command_bundle(source_format: str | None, source_path: Path, target_format: str, output_dir: Path, profile: str | None, no_repair: bool) -> int:
     result = run_bundle(source_path, source_format, target_format, output_dir, profile=profile, apply_repair=not no_repair)
     print(f"Bundled migration into {output_dir} for {target_format} using profile {result['output']['profile']}")
+    return 0
+
+
+def command_compare(before_path: Path, after_path: Path, output_path: str | None) -> int:
+    before = load_canonical_package(before_path)
+    after = load_canonical_package(after_path)
+    diff = compare_packages(before, after)
+    if output_path:
+        write_json(Path(output_path), diff)
+        print(f"Wrote compare report to {output_path}")
+    else:
+        print(json.dumps(diff, indent=2, ensure_ascii=False))
     return 0
 
 
@@ -218,6 +242,8 @@ def main() -> int:
         return command_convert(args.source_format, Path(args.input), args.target_format, Path(args.output), args.profile)
     if args.command == "bundle":
         return command_bundle(args.source_format, Path(args.input), args.target_format, Path(args.output_dir), args.profile, args.no_repair)
+    if args.command == "compare":
+        return command_compare(Path(args.before), Path(args.after), args.output)
     if args.command == "merge":
         return command_merge(args.inputs, args.formats, Path(args.output), args.package_id, args.no_dedupe, args.report_output)
     if args.command == "report":

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.0 - 2026-03-12
+
+- added compare command for canonical stage diffs
+- added bundle compare artifact for repair and transform stage inspection
+- added structured change reports for kind, title, content, tags, and metadata
+
 ## 0.11.0 - 2026-03-12
 
 - added bundle command for one-shot diagnosis, repair, and export

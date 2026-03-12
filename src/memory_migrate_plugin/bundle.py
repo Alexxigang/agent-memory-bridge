@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from memory_migrate_plugin.compare import compare_bundle_stages
 from memory_migrate_plugin.core import export_canonical_json, normalize
 from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.models import CanonicalMemoryPackage
@@ -29,6 +30,7 @@ def run_bundle(
     export_canonical_json(original_package, canonical_path)
 
     active_package: CanonicalMemoryPackage = original_package
+    repaired_package: CanonicalMemoryPackage | None = None
     repair_summary: dict[str, Any] | None = None
     repaired_path: Path | None = None
 
@@ -49,6 +51,10 @@ def run_bundle(
     doctor_path = output_dir / "doctor.json"
     write_json(doctor_path, doctor_report)
 
+    compare_report = compare_bundle_stages(original_package, repaired_package, transformed_package)
+    compare_path = output_dir / "compare.json"
+    write_json(compare_path, compare_report)
+
     bundle_summary = {
         "source": {
             "input": str(source_path),
@@ -62,6 +68,7 @@ def run_bundle(
             "transformed_path": str(transformed_path),
             "export_dir": str(export_dir),
             "doctor_path": str(doctor_path),
+            "compare_path": str(compare_path),
             "repaired_path": str(repaired_path) if repaired_path else None,
         },
         "doctor_summary": doctor_report["doctor_summary"],
