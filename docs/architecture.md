@@ -135,3 +135,8 @@ The verify layer re-computes SHA256 hashes for a bundle directory using `manifes
 ## Bundle zip
 
 The bundle workflow can optionally create a zip archive of the output directory. The SHA256 of the zip is recorded in the bundle summary for distribution and later verification.
+
+
+## Release workflow
+
+The release workflow builds on bundle and adds human-readable distribution artifacts such as `RELEASE_NOTE.md` and `release-summary.json`, making it easier to hand off migration outputs to other teams or tools.

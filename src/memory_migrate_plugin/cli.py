@@ -13,6 +13,7 @@ from memory_migrate_plugin.manifest import build_manifest
 from memory_migrate_plugin.models import CanonicalMemoryPackage
 from memory_migrate_plugin.profiles import list_profiles
 from memory_migrate_plugin.registry import build_registry, detect_format
+from memory_migrate_plugin.release import run_release
 from memory_migrate_plugin.repair import repair_package
 from memory_migrate_plugin.report import build_merge_report, build_package_report
 from memory_migrate_plugin.suggest import build_package_suggestions
@@ -54,6 +55,15 @@ def build_parser() -> argparse.ArgumentParser:
     bundle_parser.add_argument("--profile")
     bundle_parser.add_argument("--no-repair", action="store_true")
     bundle_parser.add_argument("--zip")
+
+    release_parser = subparsers.add_parser("release", help="Run bundle plus release-note generation for distribution.")
+    release_parser.add_argument("--from", dest="source_format")
+    release_parser.add_argument("--input", required=True)
+    release_parser.add_argument("--to", dest="target_format", required=True)
+    release_parser.add_argument("--output-dir", required=True)
+    release_parser.add_argument("--profile")
+    release_parser.add_argument("--no-repair", action="store_true")
+    release_parser.add_argument("--zip")
 
     compare_parser = subparsers.add_parser("compare", help="Compare two canonical packages and report differences.")
     compare_parser.add_argument("--before", required=True)
@@ -213,6 +223,29 @@ def command_verify(manifest_path: Path, root: str | None, output_path: str | Non
     return 0 if report["ok"] else 1
 
 
+def command_release(
+    source_format: str | None,
+    source_path: Path,
+    target_format: str,
+    output_dir: Path,
+    profile: str | None,
+    no_repair: bool,
+    zip_output: str | None,
+) -> int:
+    zip_path = Path(zip_output) if zip_output else None
+    result = run_release(
+        source_path,
+        source_format,
+        target_format,
+        output_dir,
+        profile=profile,
+        apply_repair=not no_repair,
+        zip_output=zip_path,
+    )
+    print(f"Released migration bundle into {output_dir} for {target_format} using profile {result['output']['profile']}")
+    return 0
+
+
 def command_merge(inputs: list[str], formats: list[str] | None, output: Path, package_id: str, no_dedupe: bool, report_output: str | None) -> int:
     resolved_formats = formats or []
     if resolved_formats and len(resolved_formats) != len(inputs):
@@ -294,6 +327,16 @@ def main() -> int:
         return command_convert(args.source_format, Path(args.input), args.target_format, Path(args.output), args.profile)
     if args.command == "bundle":
         return command_bundle(
+            args.source_format,
+            Path(args.input),
+            args.target_format,
+            Path(args.output_dir),
+            args.profile,
+            args.no_repair,
+            args.zip,
+        )
+    if args.command == "release":
+        return command_release(
             args.source_format,
             Path(args.input),
             args.target_format,

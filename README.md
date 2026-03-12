@@ -140,6 +140,12 @@ Verify a bundle workspace using its manifest:
 memory-migrate verify --manifest ./dist/bundle/manifest.json
 ```
 
+Produce a distributable release:
+
+```bash
+memory-migrate release --input ./memory-bank --to agents-md --profile agent-rules --output-dir ./dist/release --zip ./dist/release.zip
+```
+
 Generate a repaired canonical package:
 
 ```bash

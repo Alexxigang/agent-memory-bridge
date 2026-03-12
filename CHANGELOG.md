@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.0 - 2026-03-12
+
+- added release command for bundle plus release-note generation
+- release mode now writes RELEASE_NOTE.md and release-summary.json
+
 ## 0.15.0 - 2026-03-12
 
 - added bundle --zip option for shareable migration artifacts

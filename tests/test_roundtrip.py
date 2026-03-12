@@ -12,6 +12,7 @@ from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.profiles import apply_profile
 from memory_migrate_plugin.merge import merge_packages, merge_packages_detailed
 from memory_migrate_plugin.registry import detect_format
+from memory_migrate_plugin.release import run_release
 from memory_migrate_plugin.repair import repair_package
 from memory_migrate_plugin.report import build_merge_report, build_package_report
 from memory_migrate_plugin.suggest import build_package_suggestions
@@ -211,6 +212,25 @@ class MemoryMigrateTests(unittest.TestCase):
             report_bad = verify_manifest(manifest, root)
             self.assertFalse(report_bad["ok"])
             self.assertEqual(report_bad["mismatch_count"], 1)
+
+
+    def test_run_release_creates_release_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(
+                json.dumps([
+                    {"id": "same-id", "kind": "note", "title": "T", "content": "C"}
+                ]),
+                encoding="utf-8",
+            )
+            output_dir = root / "release-out"
+            zip_path = root / "release.zip"
+            summary = run_release(source, "generic-json", "agents-md", output_dir, profile="agent-rules", apply_repair=False, zip_output=zip_path)
+            self.assertTrue((output_dir / "RELEASE_NOTE.md").exists())
+            self.assertTrue((output_dir / "release-summary.json").exists())
+            self.assertTrue(zip_path.exists())
+            self.assertIn("release_note_path", summary)
 
     def test_run_bundle_can_create_zip_archive(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
