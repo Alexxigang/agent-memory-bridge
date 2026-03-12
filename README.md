@@ -134,6 +134,12 @@ Compare two canonical stages:
 memory-migrate compare --before ./dist/bundle/canonical.json --after ./dist/bundle/canonical.repaired.json --output ./dist/compare.json
 ```
 
+Verify a bundle workspace using its manifest:
+
+```bash
+memory-migrate verify --manifest ./dist/bundle/manifest.json
+```
+
 Generate a repaired canonical package:
 
 ```bash

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.0 - 2026-03-12
+
+- added verify command for manifest-based integrity checks
+- verify reports missing and mismatched files with exit code signaling
+
 ## 0.13.0 - 2026-03-12
 
 - added manifest command for SHA256 bundle auditing

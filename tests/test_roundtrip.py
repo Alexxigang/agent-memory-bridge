@@ -15,6 +15,8 @@ from memory_migrate_plugin.registry import detect_format
 from memory_migrate_plugin.repair import repair_package
 from memory_migrate_plugin.report import build_merge_report, build_package_report
 from memory_migrate_plugin.suggest import build_package_suggestions
+from memory_migrate_plugin.manifest import build_manifest
+from memory_migrate_plugin.verify import verify_manifest
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -194,6 +196,21 @@ class MemoryMigrateTests(unittest.TestCase):
             self.assertEqual(diff["changed_entry_count"], 1)
             self.assertIn("kind", diff["changed_entries"][0]["changes"])
             self.assertIn("title", diff["changed_entries"][0]["changes"])
+
+
+    def test_verify_manifest_detects_tampering(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            file_path = root / "a.txt"
+            file_path.write_text("hello", encoding="utf-8")
+            manifest = build_manifest(root)
+            report_ok = verify_manifest(manifest, root)
+            self.assertTrue(report_ok["ok"])
+
+            file_path.write_text("tampered", encoding="utf-8")
+            report_bad = verify_manifest(manifest, root)
+            self.assertFalse(report_bad["ok"])
+            self.assertEqual(report_bad["mismatch_count"], 1)
 
     def test_run_bundle_creates_expected_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

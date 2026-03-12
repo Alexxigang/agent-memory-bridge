@@ -17,6 +17,7 @@ from memory_migrate_plugin.repair import repair_package
 from memory_migrate_plugin.report import build_merge_report, build_package_report
 from memory_migrate_plugin.suggest import build_package_suggestions
 from memory_migrate_plugin.utils import write_json
+from memory_migrate_plugin.verify import verify_manifest
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -61,6 +62,11 @@ def build_parser() -> argparse.ArgumentParser:
     manifest_parser = subparsers.add_parser("manifest", help="Generate a manifest with SHA256 hashes for a bundle directory.")
     manifest_parser.add_argument("--root", required=True)
     manifest_parser.add_argument("--output")
+
+    verify_parser = subparsers.add_parser("verify", help="Verify a bundle using its manifest.json SHA256 hashes.")
+    verify_parser.add_argument("--manifest", required=True)
+    verify_parser.add_argument("--root")
+    verify_parser.add_argument("--output")
 
     merge_parser = subparsers.add_parser("merge", help="Merge multiple memory sources into one canonical package.")
     merge_parser.add_argument("--inputs", nargs="+", required=True)
@@ -176,6 +182,19 @@ def command_manifest(root: Path, output_path: str | None) -> int:
     return 0
 
 
+def command_verify(manifest_path: Path, root: str | None, output_path: str | None) -> int:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
+    default_root = Path(manifest.get("root", manifest_path.parent))
+    root_path = Path(root) if root else default_root
+    report = verify_manifest(manifest, root_path)
+    if output_path:
+        write_json(Path(output_path), report)
+        print(f"Wrote verify report to {output_path}")
+    else:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    return 0 if report["ok"] else 1
+
+
 def command_merge(inputs: list[str], formats: list[str] | None, output: Path, package_id: str, no_dedupe: bool, report_output: str | None) -> int:
     resolved_formats = formats or []
     if resolved_formats and len(resolved_formats) != len(inputs):
@@ -261,6 +280,8 @@ def main() -> int:
         return command_compare(Path(args.before), Path(args.after), args.output)
     if args.command == "manifest":
         return command_manifest(Path(args.root), args.output)
+    if args.command == "verify":
+        return command_verify(Path(args.manifest), args.root, args.output)
     if args.command == "merge":
         return command_merge(args.inputs, args.formats, Path(args.output), args.package_id, args.no_dedupe, args.report_output)
     if args.command == "report":

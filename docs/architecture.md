@@ -125,3 +125,8 @@ The compare layer reports added, removed, and changed canonical entries between 
 ## Manifest and hashes
 
 Bundle outputs now include a `manifest.json` file that records SHA256 hashes and byte sizes for every artifact (excluding the manifest itself). This supports audits, sharing, and reproducible handoffs.
+
+
+## Verify workflow
+
+The verify layer re-computes SHA256 hashes for a bundle directory using `manifest.json` and reports missing or modified artifacts. This enables integrity checks after sharing or archival.
