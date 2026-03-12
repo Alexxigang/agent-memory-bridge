@@ -63,6 +63,10 @@ GitHub Actions runs unit tests plus a CLI smoke test for `bundle` and `verify` o
 
 Official sample inputs live in `fixtures/`. See `docs/demo.md` for reproducible walkthroughs using the included demo data.
 
+## Releases
+
+Pushing a tag like `v0.18.0` triggers GitHub Actions to build Python distributions and attach a demo release bundle to the GitHub Release page.
+
 ## Installation
 
 ```bash

@@ -36,3 +36,7 @@ Pull requests are validated by GitHub Actions on Python 3.11 and 3.12. The workf
 ## Fixtures and demos
 
 When adding a new adapter or workflow, prefer adding or updating a sample under `fixtures/` and documenting a reproducible command in `docs/demo.md`.
+
+## Release process
+
+To cut a release, bump the version, update `CHANGELOG.md`, push to `main`, and create a git tag like `v0.18.0`. GitHub Actions will build artifacts and publish a GitHub Release.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.19.0 - 2026-03-13
+
+- added GitHub Release workflow for tagged builds
+- release tags now build Python distributions and attach a demo migration bundle
+- documented the tag-based release process
+
 ## 0.18.0 - 2026-03-13
 
 - added official fixtures for generic JSON, Cline/Roo, AGENTS.md, Cursor, and Claude layouts
