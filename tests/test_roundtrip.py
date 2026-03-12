@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from memory_migrate_plugin.core import normalize
+from memory_migrate_plugin.bundle import run_bundle
 from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.profiles import apply_profile
 from memory_migrate_plugin.merge import merge_packages, merge_packages_detailed
@@ -173,6 +174,28 @@ class MemoryMigrateTests(unittest.TestCase):
             package = normalize(None, source)
             self.assertEqual(package.entries[0].id, "note-1")
 
+
+
+    def test_run_bundle_creates_expected_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "entries.json"
+            source.write_text(
+                json.dumps([
+                    {"id": "same-id", "kind": "", "title": "", "content": "Has content"},
+                    {"id": "same-id", "kind": "note", "title": "Rule B", "content": "two"}
+                ]),
+                encoding="utf-8",
+            )
+            output_dir = root / "bundle-out"
+            summary = run_bundle(source, "generic-json", "agents-md", output_dir, profile="agent-rules", apply_repair=True)
+            self.assertTrue((output_dir / "canonical.json").exists())
+            self.assertTrue((output_dir / "canonical.repaired.json").exists())
+            self.assertTrue((output_dir / "canonical.transformed.json").exists())
+            self.assertTrue((output_dir / "doctor.json").exists())
+            self.assertTrue((output_dir / "bundle-summary.json").exists())
+            self.assertTrue((output_dir / "exported" / "AGENTS.md").exists())
+            self.assertEqual(summary["output"]["profile"], "agent-rules")
 
     def test_apply_profile_developer_strict_transforms_entries(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from memory_migrate_plugin.bundle import run_bundle
 from memory_migrate_plugin.core import convert, export_canonical_json, normalize
 from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.merge import merge_packages_detailed
@@ -40,6 +41,14 @@ def build_parser() -> argparse.ArgumentParser:
     convert_parser.add_argument("--to", dest="target_format", required=True)
     convert_parser.add_argument("--output", required=True)
     convert_parser.add_argument("--profile")
+
+    bundle_parser = subparsers.add_parser("bundle", help="Run doctor, optional repair, and export in one workflow.")
+    bundle_parser.add_argument("--from", dest="source_format")
+    bundle_parser.add_argument("--input", required=True)
+    bundle_parser.add_argument("--to", dest="target_format", required=True)
+    bundle_parser.add_argument("--output-dir", required=True)
+    bundle_parser.add_argument("--profile")
+    bundle_parser.add_argument("--no-repair", action="store_true")
 
     merge_parser = subparsers.add_parser("merge", help="Merge multiple memory sources into one canonical package.")
     merge_parser.add_argument("--inputs", nargs="+", required=True)
@@ -122,6 +131,12 @@ def command_convert(source_format: str | None, source_path: Path, target_format:
     return 0
 
 
+def command_bundle(source_format: str | None, source_path: Path, target_format: str, output_dir: Path, profile: str | None, no_repair: bool) -> int:
+    result = run_bundle(source_path, source_format, target_format, output_dir, profile=profile, apply_repair=not no_repair)
+    print(f"Bundled migration into {output_dir} for {target_format} using profile {result['output']['profile']}")
+    return 0
+
+
 def command_merge(inputs: list[str], formats: list[str] | None, output: Path, package_id: str, no_dedupe: bool, report_output: str | None) -> int:
     resolved_formats = formats or []
     if resolved_formats and len(resolved_formats) != len(inputs):
@@ -201,6 +216,8 @@ def main() -> int:
         return command_normalize(args.format, Path(args.input), Path(args.output))
     if args.command == "convert":
         return command_convert(args.source_format, Path(args.input), args.target_format, Path(args.output), args.profile)
+    if args.command == "bundle":
+        return command_bundle(args.source_format, Path(args.input), args.target_format, Path(args.output_dir), args.profile, args.no_repair)
     if args.command == "merge":
         return command_merge(args.inputs, args.formats, Path(args.output), args.package_id, args.no_dedupe, args.report_output)
     if args.command == "report":

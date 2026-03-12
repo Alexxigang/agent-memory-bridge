@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.0 - 2026-03-12
+
+- added bundle command for one-shot diagnosis, repair, and export
+- added bundle output workspace with canonical, repaired, transformed, and exported artifacts
+- added bundle summary manifest for automation and review
+
 ## 0.10.0 - 2026-03-12
 
 - added export profiles for target-style conversion behavior

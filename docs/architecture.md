@@ -110,3 +110,8 @@ The `cline-memory-bank` adapter now supports a wider standard file set, includin
 ## Export profiles
 
 The convert pipeline now supports profile-based transforms before adapter export. Current profiles include `default`, `developer-strict`, `project-handoff`, and `agent-rules`. These profiles adjust entry kinds, tags, and content framing to better match the target agent workflow.
+
+
+## Bundle workflow
+
+The bundle pipeline is an operator-facing shortcut that writes a full migration workspace: original canonical package, repaired package, transformed package, doctor report, exported target files, and a bundle summary manifest.

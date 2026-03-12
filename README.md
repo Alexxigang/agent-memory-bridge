@@ -49,6 +49,7 @@ Key capabilities:
 - safe repair output that writes a new canonical package instead of overwriting the source
 - doctor workflow that combines report, suggestions, and repair preview into one diagnosis
 - profile-based export strategies for different target styles
+- bundle workflow for one-command diagnosis, repair, and export
 - adapters for Cursor rules, Claude project memory, and AGENTS.md collaboration bundles
 
 The architecture is intentionally adapter-first, so more products can be added without changing the core model.
@@ -107,6 +108,12 @@ Run a full doctor workflow:
 
 ```bash
 memory-migrate doctor --input ./dist/merged.json --output ./dist/doctor.json
+```
+
+Run a one-shot bundle workflow:
+
+```bash
+memory-migrate bundle --input ./memory-bank --to agents-md --profile agent-rules --output-dir ./dist/bundle
 ```
 
 Generate a repaired canonical package:
