@@ -15,6 +15,7 @@ from memory_migrate_plugin.profiles import list_profiles
 from memory_migrate_plugin.registry import build_registry, detect_format
 from memory_migrate_plugin.release import run_release
 from memory_migrate_plugin.repair import repair_package
+from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
 from memory_migrate_plugin.report import build_merge_report, build_package_report
 from memory_migrate_plugin.suggest import build_package_suggestions
 from memory_migrate_plugin.utils import write_json
@@ -27,6 +28,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("adapters", help="List supported adapters.")
     subparsers.add_parser("profiles", help="List supported export profiles.")
+
+    schema_parser = subparsers.add_parser("schema", help="Print or export the canonical JSON Schema.")
+    schema_parser.add_argument("--output")
 
     detect_parser = subparsers.add_parser("detect", help="Detect the most likely source format for a path.")
     detect_parser.add_argument("--input", required=True)
@@ -126,6 +130,15 @@ def command_adapters() -> int:
 def command_profiles() -> int:
     for name, description in list_profiles().items():
         print(f"{name}\t{description}")
+    return 0
+
+
+def command_schema(output_path: str | None) -> int:
+    schema = build_canonical_package_schema() if not output_path else write_canonical_package_schema(Path(output_path))
+    if output_path:
+        print(f"Wrote schema to {output_path}")
+    else:
+        print(json.dumps(schema, indent=2, ensure_ascii=False))
     return 0
 
 
@@ -317,6 +330,8 @@ def main() -> int:
         return command_adapters()
     if args.command == "profiles":
         return command_profiles()
+    if args.command == "schema":
+        return command_schema(args.output)
     if args.command == "detect":
         return command_detect(Path(args.input))
     if args.command == "inspect":

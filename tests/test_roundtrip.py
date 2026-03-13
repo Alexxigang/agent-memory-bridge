@@ -18,6 +18,7 @@ from memory_migrate_plugin.report import build_merge_report, build_package_repor
 from memory_migrate_plugin.suggest import build_package_suggestions
 from memory_migrate_plugin.manifest import build_manifest
 from memory_migrate_plugin.verify import verify_manifest
+from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -52,6 +53,21 @@ class MemoryMigrateTests(unittest.TestCase):
             )
             package = normalize("generic-json", source)
             self.assertEqual(package.entries[0].title, "Editor")
+
+    def test_build_canonical_package_schema_describes_required_fields(self) -> None:
+        schema = build_canonical_package_schema()
+        self.assertEqual(schema["title"], "CanonicalMemoryPackage")
+        self.assertIn("entries", schema["required"])
+        self.assertEqual(schema["properties"]["entries"]["items"]["$ref"], "#/$defs/memoryEntry")
+        self.assertIn("source_format", schema["$defs"]["memoryEntry"]["required"])
+
+    def test_write_canonical_package_schema_outputs_json_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output = Path(tmpdir) / "canonical-memory-package.schema.json"
+            schema = write_canonical_package_schema(output)
+            written = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(written["$id"], schema["$id"])
+            self.assertEqual(written["$schema"], "https://json-schema.org/draft/2020-12/schema")
 
     def test_detect_format_prefers_cline_memory_bank(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

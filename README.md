@@ -25,6 +25,7 @@ This project solves that with a portable canonical memory package plus adapter-b
 
 - detect supported source formats automatically
 - normalize memory into a canonical package
+- publish a JSON Schema for external tool integrations
 - convert across agent-specific formats
 - run diagnostics with `doctor`
 - generate suggestions and safe repairs

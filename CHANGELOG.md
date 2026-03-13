@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.21.0 - 2026-03-13
+
+- added a canonical JSON Schema export for third-party tool integration
+- added a `schema` CLI command to print or write the schema
+
 ## 0.20.0 - 2026-03-13
 
 - refreshed README homepage with badges, quick start, and workflow overview
