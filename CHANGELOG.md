@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.20.0 - 2026-03-13
+
+- refreshed README homepage with badges, quick start, and workflow overview
+- added PowerShell demo script for reproducible local release walkthroughs
+
 ## 0.19.0 - 2026-03-13
 
 - added GitHub Release workflow for tagged builds

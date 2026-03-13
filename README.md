@@ -1,270 +1,150 @@
 # Agent Memory Bridge
 
-Agent Memory Bridge is an open-source toolkit for migrating reusable memory across AI agent systems.
+[![CI](https://github.com/Alexxigang/agent-memory-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/Alexxigang/agent-memory-bridge/actions/workflows/ci.yml)
+[![Release](https://github.com/Alexxigang/agent-memory-bridge/actions/workflows/release.yml/badge.svg)](https://github.com/Alexxigang/agent-memory-bridge/actions/workflows/release.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 
-Instead of rewriting project context, preferences, long-term notes, and decision history every time you switch tools, this project converts memory into a shared canonical model and then exports it into target-specific formats.
+Open-source toolkit for migrating reusable memory across AI agent systems.
 
-## Why this can work
+Agent Memory Bridge helps you move project memory, preferences, decisions, rules, and handoff context between agent products without rewriting everything by hand.
 
-Different agent products store memory differently, but the useful information is usually the same:
+## Why it matters
 
-- user profile and preferences
-- project context and constraints
-- decisions and durable facts
-- tasks, plans, and recurring instructions
-- reusable snippets and references
+Switching between AI coding tools usually means losing accumulated context:
 
-That means the hard problem is not "remember everything exactly as the source product does". The practical problem is "preserve the meaning and structure well enough to continue work in another product".
+- user preferences
+- project instructions
+- architecture decisions
+- active task context
+- reusable rules and notes
 
-This repository focuses on that practical layer.
+This project solves that with a portable canonical memory package plus adapter-based import/export.
 
-## Product direction
+## What you can do
 
-The current architecture uses three ideas:
+- detect supported source formats automatically
+- normalize memory into a canonical package
+- convert across agent-specific formats
+- run diagnostics with `doctor`
+- generate suggestions and safe repairs
+- compare migration stages
+- create auditable bundles with manifests and verification
+- generate distributable release bundles with zip output
 
-1. A canonical memory package format (`CanonicalMemoryPackage`)
-2. Source and target adapters for each agent ecosystem
-3. A CLI that imports, inspects, auto-detects, normalizes, merges, audits, suggests repairs, auto-repairs, diagnoses, and exports memory
+## Supported formats
 
-## Current scope
+- `generic-json`
+- `markdown-bundle`
+- `codex-memories`
+- `cline-memory-bank`
+- `cursor-rules`
+- `claude-project`
+- `agents-md`
 
-Supported adapters in this version:
+## Quick start
 
-- `generic-json`: import or export canonical-friendly JSON files
-- `markdown-bundle`: import or export a folder of markdown memory notes
-- `codex-memories`: import or export markdown memories compatible with a simple Codex-style memory folder layout
-- `cline-memory-bank`: import or export common Memory Bank markdown files used by Cline/Roo-style workflows, including extended files like `decisionLog.md` and `userContext.md`
-- `cursor-rules`: import or export Cursor-style `.cursor/rules/*.mdc` rule bundles
-- `claude-project`: import or export `CLAUDE.md` project memory plus companion notes
-- `agents-md`: import or export `AGENTS.md` plus `.agents/notes/*.md` collaboration bundles
-
-Key capabilities:
-
-- auto-detect supported input formats
-- merge multiple memory sources into one canonical package
-- fingerprint-based dedupe for obvious duplicates
-- deterministic JSON output for review and diffing
-- migration report generation with audit findings
-- repair suggestions for missing fields and duplicate patterns
-- safe repair output that writes a new canonical package instead of overwriting the source
-- doctor workflow that combines report, suggestions, and repair preview into one diagnosis
-- profile-based export strategies for different target styles
-- bundle workflow for one-command diagnosis, repair, and export
-- compare workflow for stage-to-stage diff inspection
-- adapters for Cursor rules, Claude project memory, and AGENTS.md collaboration bundles
-
-The architecture is intentionally adapter-first, so more products can be added without changing the core model.
-
-## CI
-
-GitHub Actions runs unit tests plus a CLI smoke test for `bundle` and `verify` on pushes and pull requests.
-
-## Fixtures
-
-Official sample inputs live in `fixtures/`. See `docs/demo.md` for reproducible walkthroughs using the included demo data.
-
-## Releases
-
-Pushing a tag like `v0.18.0` triggers GitHub Actions to build Python distributions and attach a demo release bundle to the GitHub Release page.
-
-## Installation
+Install locally:
 
 ```bash
 python -m pip install -e .
 ```
 
-## CLI usage
-
-List available adapters:
+List adapters:
 
 ```bash
 memory-migrate adapters
 ```
 
-Detect a source format automatically:
+Run a full release demo with bundled artifacts:
 
 ```bash
-memory-migrate detect --input ./memory-bank
+memory-migrate release   --input ./fixtures/cline-memory-bank   --to agents-md   --profile agent-rules   --output-dir ./dist/demo-release   --zip ./dist/demo-release.zip
 ```
 
-Inspect a source without manually passing `--format`:
+Verify the generated bundle:
 
 ```bash
-memory-migrate inspect --input ./memory-bank
+memory-migrate verify --manifest ./dist/demo-release/manifest.json
 ```
 
-Normalize a source into the canonical package:
+## Demo data
+
+Official sample inputs live in `fixtures/`.
+
+- quick walkthrough: `docs/demo.md`
+- PowerShell demo script: `scripts/demo.ps1`
+
+Run the included demo script:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\demo.ps1
+```
+
+## Core workflows
+
+Inspect a source:
 
 ```bash
-memory-migrate normalize --input ./memory-bank --output ./dist/canonical.json
+memory-migrate inspect --input ./fixtures/agents-md
 ```
 
-Convert from one format into another:
+Convert with a target profile:
 
 ```bash
-memory-migrate convert --input ./memory-bank --to codex-memories --output ./dist/codex-memories
+memory-migrate convert   --input ./fixtures/generic-json/sample.json   --to cursor-rules   --profile developer-strict   --output ./dist/cursor-rules
 ```
 
-List export profiles:
+Run doctor:
 
 ```bash
-memory-migrate profiles
+memory-migrate doctor --input ./fixtures/agents-md --output ./dist/agents-doctor.json
 ```
 
-Convert with a target-style profile:
+Run bundle:
 
 ```bash
-memory-migrate convert --input ./memory-bank --to cursor-rules --profile developer-strict --output ./dist/cursor-rules
+memory-migrate bundle   --input ./fixtures/cline-memory-bank   --to agents-md   --profile agent-rules   --output-dir ./dist/bundle   --zip ./dist/bundle.zip
 ```
 
-Run a full doctor workflow:
+Compare stages:
 
 ```bash
-memory-migrate doctor --input ./dist/merged.json --output ./dist/doctor.json
+memory-migrate compare   --before ./dist/bundle/canonical.json   --after ./dist/bundle/canonical.repaired.json   --output ./dist/compare.json
 ```
 
-Run a one-shot bundle workflow:
+## Bundle contents
 
-```bash
-memory-migrate bundle --input ./memory-bank --to agents-md --profile agent-rules --output-dir ./dist/bundle --zip ./dist/bundle.zip
-```
-
-The bundle workspace contains:
+A bundle can include:
 
 - `canonical.json`
-- `canonical.repaired.json` (if repair enabled)
+- `canonical.repaired.json`
 - `canonical.transformed.json`
 - `doctor.json`
 - `compare.json`
-- `manifest.json` (SHA256 audit)
+- `manifest.json`
 - `bundle-summary.json`
 - `exported/`
+- optional zip archive
 
-Compare two canonical stages:
+## CI and releases
 
-```bash
-memory-migrate compare --before ./dist/bundle/canonical.json --after ./dist/bundle/canonical.repaired.json --output ./dist/compare.json
-```
-
-Verify a bundle workspace using its manifest:
-
-```bash
-memory-migrate verify --manifest ./dist/bundle/manifest.json
-```
-
-Produce a distributable release:
-
-```bash
-memory-migrate release --input ./memory-bank --to agents-md --profile agent-rules --output-dir ./dist/release --zip ./dist/release.zip
-```
-
-Generate a repaired canonical package:
-
-```bash
-memory-migrate repair \
-  --input ./dist/merged.json \
-  --output ./dist/merged.repaired.json \
-  --report-output ./dist/repair-report.json
-```
-
-## Doctor workflow
-
-The `doctor` command combines:
-
-- a structural audit report
-- repair suggestions
-- a non-destructive repair preview
-- a simple health score for the current package
-
-This makes the CLI easier to use when you want one command that tells you what is wrong, what can be fixed, and what the repaired result would look like.
-
-## Reports, suggestions, and repair
-
-The report layer summarizes:
-
-- source formats and entry counts
-- entry kinds and top tags
-- missing required fields
-- duplicate ids inside a package
-- duplicate content fingerprints inside a package
-- merge-time skipped entries and likely conflict candidates
-
-The suggestion layer adds:
-
-- proposed fallback values for missing `id`, `kind`, or `title`
-- duplicate-id cleanup guidance
-- duplicate-content review guidance
-
-The repair layer can then:
-
-- fill missing `title` from `id`
-- fill missing `kind` with `note`
-- generate missing `id` from a slugified title
-- fill missing `content` with a clear placeholder
-- rename duplicate ids with numeric suffixes
-
-This makes migration results explainable and actionable instead of opaque.
-
-## Canonical model
-
-The canonical package stores:
-
-- package metadata
-- source provenance
-- normalized entries
-
-Each entry includes:
-
-- `id`
-- `kind`
-- `title`
-- `content`
-- `tags`
-- `metadata`
-- timestamps when available
-
-This is enough for a wide range of memory systems while staying easy to inspect and diff.
+- CI runs unit tests plus CLI smoke checks on push and pull request
+- pushing a tag like `v0.19.0` triggers the GitHub Release workflow
+- releases attach build artifacts plus a demo migration bundle
 
 ## Project structure
 
 - `src/memory_migrate_plugin/models.py`: canonical schema
-- `src/memory_migrate_plugin/core.py`: conversion pipeline
-- `src/memory_migrate_plugin/merge.py`: merge and dedupe logic
-- `src/memory_migrate_plugin/report.py`: reporting and audit logic
-- `src/memory_migrate_plugin/suggest.py`: repair suggestion logic
-- `src/memory_migrate_plugin/repair.py`: safe auto-repair logic
-- `src/memory_migrate_plugin/doctor.py`: one-shot diagnosis workflow
-- `src/memory_migrate_plugin/adapters/`: source and target adapters, including Cursor, Claude project, and AGENTS.md layouts
-- `src/memory_migrate_plugin/cli.py`: command-line interface
-- `docs/architecture.md`: design and roadmap
-
-## Feasibility and roadmap
-
-### Feasible now
-
-- migrate markdown and JSON based memory stores
-- standardize memory into a portable package
-- preserve tags, categories, provenance, and notes
-- merge multiple memory inputs into one handoff package
-- generate target-specific output layouts
-- audit migration results for obvious issues
-- suggest likely repairs before export
-- auto-repair common canonical issues into a new package
-- run a full doctor diagnosis in one command
-
-### Hard but still doable later
-
-- richer product-specific adapters for proprietary formats
-- conflict resolution across multiple memory sources
-- semantic dedupe and similarity-based merge
-- embeddings-based retrieval and re-ranking
-- encrypted sync and remote registry support
-
-### Not guaranteed in every product
-
-If a closed-source tool stores memory in encrypted local databases or private cloud APIs, full fidelity export may require reverse engineering or official integration.
-
-That does not block the product itself. It just changes how deep a specific adapter can go.
+- `src/memory_migrate_plugin/core.py`: normalization and conversion pipeline
+- `src/memory_migrate_plugin/profiles.py`: target-style export profiles
+- `src/memory_migrate_plugin/bundle.py`: one-shot bundle workflow
+- `src/memory_migrate_plugin/release.py`: release bundle generation
+- `src/memory_migrate_plugin/manifest.py`: hash manifest generation
+- `src/memory_migrate_plugin/verify.py`: integrity verification
+- `src/memory_migrate_plugin/adapters/`: source and target adapters
+- `fixtures/`: official sample inputs
+- `docs/demo.md`: reproducible demo walkthrough
 
 ## Contributing
 
