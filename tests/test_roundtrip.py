@@ -19,6 +19,7 @@ from memory_migrate_plugin.suggest import build_package_suggestions
 from memory_migrate_plugin.manifest import build_manifest
 from memory_migrate_plugin.verify import verify_manifest
 from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
+from memory_migrate_plugin.validate import validate_package, validate_package_file
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -348,6 +349,51 @@ class MemoryMigrateTests(unittest.TestCase):
             report = build_package_report(package)
             self.assertEqual(report["audit"]["issues_found"], 1)
             self.assertEqual(report["audit"]["missing_required_fields"][0]["missing_fields"], ["title"])
+
+    def test_validate_package_accepts_valid_canonical_package(self) -> None:
+        source = Path("fixtures/generic-json/sample.json")
+        package = normalize("generic-json", source)
+        result = validate_package(package)
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["summary"]["error_count"], 0)
+
+    def test_validate_package_file_reports_errors_and_duplicate_warnings(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "invalid-package.json"
+            path.write_text(
+                json.dumps({
+                    "schema_version": "2.0",
+                    "package_id": "demo",
+                    "created_at": "not-a-date",
+                    "source_formats": ["generic-json", "generic-json"],
+                    "metadata": {},
+                    "entries": [
+                        {
+                            "id": "same-id",
+                            "kind": "note",
+                            "title": "A",
+                            "content": "one",
+                            "tags": ["ok"],
+                            "source_format": "generic-json",
+                            "metadata": {}
+                        },
+                        {
+                            "id": "same-id",
+                            "kind": "",
+                            "title": "B",
+                            "content": "two",
+                            "tags": "bad-tags",
+                            "source_format": "generic-json",
+                            "metadata": []
+                        }
+                    ]
+                }),
+                encoding="utf-8",
+            )
+            result = validate_package_file(path)
+            self.assertFalse(result["ok"])
+            self.assertGreaterEqual(result["summary"]["error_count"], 3)
+            self.assertGreaterEqual(result["summary"]["warning_count"], 2)
 
     def test_build_merge_report_includes_skipped_entries(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

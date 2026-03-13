@@ -32,6 +32,7 @@ This project solves that with a portable canonical memory package plus adapter-b
 - compare migration stages
 - create auditable bundles with manifests and verification
 - generate distributable release bundles with zip output
+- validate canonical packages before import or publishing
 
 ## Supported formats
 

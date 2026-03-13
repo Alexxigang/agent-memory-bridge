@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.0 - 2026-03-13
+
+- added canonical package validation with machine-readable error and warning reports
+- added a `validate` CLI command for pre-import and pre-release checks
+
 ## 0.21.0 - 2026-03-13
 
 - added a canonical JSON Schema export for third-party tool integration

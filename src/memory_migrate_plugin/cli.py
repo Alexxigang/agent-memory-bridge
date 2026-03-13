@@ -20,6 +20,7 @@ from memory_migrate_plugin.report import build_merge_report, build_package_repor
 from memory_migrate_plugin.suggest import build_package_suggestions
 from memory_migrate_plugin.utils import write_json
 from memory_migrate_plugin.verify import verify_manifest
+from memory_migrate_plugin.validate import validate_package_file
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -82,6 +83,10 @@ def build_parser() -> argparse.ArgumentParser:
     verify_parser.add_argument("--manifest", required=True)
     verify_parser.add_argument("--root")
     verify_parser.add_argument("--output")
+
+    validate_parser = subparsers.add_parser("validate", help="Validate a canonical package JSON file.")
+    validate_parser.add_argument("--input", required=True)
+    validate_parser.add_argument("--output")
 
     merge_parser = subparsers.add_parser("merge", help="Merge multiple memory sources into one canonical package.")
     merge_parser.add_argument("--inputs", nargs="+", required=True)
@@ -236,6 +241,15 @@ def command_verify(manifest_path: Path, root: str | None, output_path: str | Non
     return 0 if report["ok"] else 1
 
 
+def command_validate(input_path: Path, output_path: str | None) -> int:
+    result = validate_package_file(input_path, Path(output_path) if output_path else None)
+    if output_path:
+        print(f"Wrote validation report to {output_path}")
+    else:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0 if result["ok"] else 1
+
+
 def command_release(
     source_format: str | None,
     source_path: Path,
@@ -366,6 +380,8 @@ def main() -> int:
         return command_manifest(Path(args.root), args.output)
     if args.command == "verify":
         return command_verify(Path(args.manifest), args.root, args.output)
+    if args.command == "validate":
+        return command_validate(Path(args.input), args.output)
     if args.command == "merge":
         return command_merge(args.inputs, args.formats, Path(args.output), args.package_id, args.no_dedupe, args.report_output)
     if args.command == "report":
