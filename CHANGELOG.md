@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.0 - 2026-03-13
+
+- added `init-adapter` to scaffold new adapter modules, tests, and integration docs
+- added generated next-step guidance for registry wiring and fixtures
+
 ## 0.22.0 - 2026-03-13
 
 - added canonical package validation with machine-readable error and warning reports

@@ -9,6 +9,7 @@ from memory_migrate_plugin.compare import compare_packages
 from memory_migrate_plugin.core import convert, export_canonical_json, normalize
 from memory_migrate_plugin.doctor import build_doctor_report
 from memory_migrate_plugin.merge import merge_packages_detailed
+from memory_migrate_plugin.init_adapter import init_adapter
 from memory_migrate_plugin.manifest import build_manifest
 from memory_migrate_plugin.models import CanonicalMemoryPackage
 from memory_migrate_plugin.profiles import list_profiles
@@ -116,6 +117,11 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_parser.add_argument("--format")
     doctor_parser.add_argument("--input", required=True)
     doctor_parser.add_argument("--output")
+
+    init_adapter_parser = subparsers.add_parser("init-adapter", help="Generate a starter adapter, test, and integration notes.")
+    init_adapter_parser.add_argument("--name", required=True)
+    init_adapter_parser.add_argument("--class-name")
+    init_adapter_parser.add_argument("--output-root", default=".")
 
     return parser
 
@@ -336,6 +342,12 @@ def command_doctor(source_format: str | None, source_path: Path, output_path: st
     return 0
 
 
+def command_init_adapter(name: str, class_name: str | None, output_root: Path) -> int:
+    result = init_adapter(name, output_root, class_name)
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -392,6 +404,8 @@ def main() -> int:
         return command_repair(args.format, Path(args.input), Path(args.output), args.report_output)
     if args.command == "doctor":
         return command_doctor(args.format, Path(args.input), args.output)
+    if args.command == "init-adapter":
+        return command_init_adapter(args.name, args.class_name, Path(args.output_root))
     parser.error("Unknown command")
     return 2
 

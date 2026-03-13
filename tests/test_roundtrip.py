@@ -20,6 +20,7 @@ from memory_migrate_plugin.manifest import build_manifest
 from memory_migrate_plugin.verify import verify_manifest
 from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
 from memory_migrate_plugin.validate import validate_package, validate_package_file
+from memory_migrate_plugin.init_adapter import init_adapter
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -349,6 +350,24 @@ class MemoryMigrateTests(unittest.TestCase):
             report = build_package_report(package)
             self.assertEqual(report["audit"]["issues_found"], 1)
             self.assertEqual(report["audit"]["missing_required_fields"][0]["missing_fields"], ["title"])
+
+    def test_init_adapter_generates_scaffold_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = init_adapter("openhands-session", Path(tmpdir))
+            adapter_path = Path(result["adapter_path"])
+            test_path = Path(result["test_path"])
+            doc_path = Path(result["doc_path"])
+            self.assertTrue(adapter_path.exists())
+            self.assertTrue(test_path.exists())
+            self.assertTrue(doc_path.exists())
+            self.assertIn("class OpenhandsSessionAdapter", adapter_path.read_text(encoding="utf-8"))
+            self.assertIn("register the adapter", doc_path.read_text(encoding="utf-8").lower())
+
+    def test_init_adapter_rejects_existing_targets(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            init_adapter("openhands-session", Path(tmpdir))
+            with self.assertRaises(FileExistsError):
+                init_adapter("openhands-session", Path(tmpdir))
 
     def test_validate_package_accepts_valid_canonical_package(self) -> None:
         source = Path("fixtures/generic-json/sample.json")
