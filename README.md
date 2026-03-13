@@ -34,6 +34,7 @@ This project solves that with a portable canonical memory package plus adapter-b
 - generate distributable release bundles with zip output
 - validate canonical packages before import or publishing
 - scaffold new adapter integrations with a generated starter template
+- run a local web UI for interactive migration workflows
 
 ## Supported formats
 

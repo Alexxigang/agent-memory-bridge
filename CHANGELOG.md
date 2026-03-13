@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.0 - 2026-03-13
+
+- added a local web UI with detect, inspect, normalize, validate, and bundle workflows
+- added a `serve` CLI command powered by the Python standard library HTTP server
+
 ## 0.23.0 - 2026-03-13
 
 - added `init-adapter` to scaffold new adapter modules, tests, and integration docs

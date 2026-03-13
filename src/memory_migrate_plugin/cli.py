@@ -17,6 +17,7 @@ from memory_migrate_plugin.registry import build_registry, detect_format
 from memory_migrate_plugin.release import run_release
 from memory_migrate_plugin.repair import repair_package
 from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
+from memory_migrate_plugin.serve import serve_web_ui
 from memory_migrate_plugin.report import build_merge_report, build_package_report
 from memory_migrate_plugin.suggest import build_package_suggestions
 from memory_migrate_plugin.utils import write_json
@@ -88,6 +89,10 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser = subparsers.add_parser("validate", help="Validate a canonical package JSON file.")
     validate_parser.add_argument("--input", required=True)
     validate_parser.add_argument("--output")
+
+    serve_parser = subparsers.add_parser("serve", help="Start the local web UI for interactive memory migration workflows.")
+    serve_parser.add_argument("--host", default="127.0.0.1")
+    serve_parser.add_argument("--port", type=int, default=8765)
 
     merge_parser = subparsers.add_parser("merge", help="Merge multiple memory sources into one canonical package.")
     merge_parser.add_argument("--inputs", nargs="+", required=True)
@@ -256,6 +261,11 @@ def command_validate(input_path: Path, output_path: str | None) -> int:
     return 0 if result["ok"] else 1
 
 
+def command_serve(host: str, port: int) -> int:
+    serve_web_ui(host, port)
+    return 0
+
+
 def command_release(
     source_format: str | None,
     source_path: Path,
@@ -394,6 +404,8 @@ def main() -> int:
         return command_verify(Path(args.manifest), args.root, args.output)
     if args.command == "validate":
         return command_validate(Path(args.input), args.output)
+    if args.command == "serve":
+        return command_serve(args.host, args.port)
     if args.command == "merge":
         return command_merge(args.inputs, args.formats, Path(args.output), args.package_id, args.no_dedupe, args.report_output)
     if args.command == "report":

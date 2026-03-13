@@ -21,6 +21,7 @@ from memory_migrate_plugin.verify import verify_manifest
 from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
 from memory_migrate_plugin.validate import validate_package, validate_package_file
 from memory_migrate_plugin.init_adapter import init_adapter
+from memory_migrate_plugin.serve import execute_web_action, render_page
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -350,6 +351,24 @@ class MemoryMigrateTests(unittest.TestCase):
             report = build_package_report(package)
             self.assertEqual(report["audit"]["issues_found"], 1)
             self.assertEqual(report["audit"]["missing_required_fields"][0]["missing_fields"], ["title"])
+
+    def test_render_page_contains_ui_shell(self) -> None:
+        html = render_page()
+        self.assertIn("Agent Memory Bridge", html)
+        self.assertIn("Run Workflow", html)
+
+    def test_execute_web_action_detect_returns_matches(self) -> None:
+        result = execute_web_action("detect", "fixtures/generic-json/sample.json")
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["action"], "detect")
+        self.assertGreaterEqual(len(result["result"]["matches"]), 1)
+
+    def test_execute_web_action_normalize_writes_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output = Path(tmpdir) / "normalized.json"
+            result = execute_web_action("normalize", "fixtures/generic-json/sample.json", source_format="generic-json", output_path=str(output))
+            self.assertTrue(result["ok"])
+            self.assertTrue(output.exists())
 
     def test_init_adapter_generates_scaffold_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
