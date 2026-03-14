@@ -21,7 +21,7 @@ from memory_migrate_plugin.verify import verify_manifest
 from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
 from memory_migrate_plugin.validate import validate_package, validate_package_file
 from memory_migrate_plugin.init_adapter import init_adapter
-from memory_migrate_plugin.serve import execute_web_action, render_page
+from memory_migrate_plugin.serve import execute_web_action, register_download, render_page, save_uploaded_zip
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -351,6 +351,41 @@ class MemoryMigrateTests(unittest.TestCase):
             report = build_package_report(package)
             self.assertEqual(report["audit"]["issues_found"], 1)
             self.assertEqual(report["audit"]["missing_required_fields"][0]["missing_fields"], ["title"])
+
+    def test_save_uploaded_zip_extracts_fixture_archive(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            zip_path = Path(tmpdir) / "fixture.zip"
+            source_dir = Path(tmpdir) / "source"
+            source_dir.mkdir()
+            (source_dir / "projectbrief.md").write_text("Project overview", encoding="utf-8")
+            import zipfile
+            with zipfile.ZipFile(zip_path, "w") as archive:
+                archive.write(source_dir / "projectbrief.md", arcname="projectbrief.md")
+            saved = save_uploaded_zip("fixture.zip", zip_path.read_bytes(), Path(tmpdir) / "ui")
+            self.assertTrue(Path(saved["zip_path"]).exists())
+            self.assertTrue(Path(saved["input_path"]).exists())
+
+    def test_register_download_returns_local_download_url(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "bundle.zip"
+            target.write_bytes(b"demo")
+            item = register_download(target)
+            self.assertTrue(item["url"].startswith("/download?token="))
+            self.assertEqual(item["filename"], "bundle.zip")
+
+    def test_execute_web_action_bundle_returns_downloads(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir) / "bundle-output"
+            result = execute_web_action(
+                "bundle",
+                "fixtures/generic-json/sample.json",
+                source_format="generic-json",
+                target_format="codex-memories",
+                output_path=str(output_dir),
+            )
+            self.assertTrue(result["ok"])
+            self.assertGreaterEqual(len(result["downloads"]), 2)
+            self.assertTrue((output_dir / "bundle-summary.json").exists())
 
     def test_render_page_contains_ui_shell(self) -> None:
         html = render_page()

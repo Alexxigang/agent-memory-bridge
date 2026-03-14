@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.25.0 - 2026-03-14
+
+- added zip upload and direct bundle downloads in the local web UI
+- fixed the web bundle workflow to produce downloadable release artifacts
+
 ## 0.24.0 - 2026-03-13
 
 - added a local web UI with detect, inspect, normalize, validate, and bundle workflows
