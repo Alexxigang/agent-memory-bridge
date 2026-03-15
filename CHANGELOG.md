@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.0 - 2026-03-15
+
+- added in-session workflow history and recent download tracking to the local web UI
+- improved the web UI so repeated local operations are easier to review and continue
+
 ## 0.25.0 - 2026-03-14
 
 - added zip upload and direct bundle downloads in the local web UI

@@ -23,6 +23,9 @@ from memory_migrate_plugin.validate import validate_package_file
 
 UI_WORKSPACE_ROOT = Path(tempfile.gettempdir()) / "agent-memory-bridge-ui"
 DOWNLOAD_REGISTRY: dict[str, Path] = {}
+ACTION_HISTORY: list[dict[str, Any]] = []
+MAX_ACTION_HISTORY = 12
+MAX_RECENT_DOWNLOADS = 10
 
 HTML_PAGE = Template("""<!doctype html>
 <html lang="en">
@@ -171,6 +174,31 @@ HTML_PAGE = Template("""<!doctype html>
       background: #fffdf8;
       border: 1px solid var(--line);
     }
+    .panel-title {
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .history {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+    .history-item {
+      border-top: 1px solid rgba(216, 201, 177, 0.7);
+      padding-top: 10px;
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .history-item:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+    .history-item strong { color: var(--ink); }
     .downloads a {
       color: var(--accent);
       font-weight: 700;
@@ -268,6 +296,7 @@ HTML_PAGE = Template("""<!doctype html>
       <div class="card output">
         <div class="banner $status_class">$message</div>
         $download_links
+        $history_panel
         <pre>$output</pre>
         <div class="tips">
           <div>Suggested first try: <code>detect</code> or <code>inspect</code> before <code>bundle</code>.</div>
@@ -346,6 +375,71 @@ def register_download(path: Path) -> dict[str, str]:
         "filename": resolved.name,
         "url": f"/download?token={token}",
     }
+
+
+def _recent_downloads() -> list[dict[str, str]]:
+    items: list[dict[str, str]] = []
+    for token, path in list(DOWNLOAD_REGISTRY.items())[-MAX_RECENT_DOWNLOADS:][::-1]:
+        if path.exists() and path.is_file():
+            items.append({
+                "token": token,
+                "path": str(path),
+                "filename": path.name,
+                "url": f"/download?token={token}",
+            })
+    return items
+
+
+def record_action_history(
+    action: str,
+    ok: bool,
+    input_path: str,
+    source_format: str | None,
+    target_format: str | None,
+    output_path: str | None,
+    message: str,
+    downloads: list[dict[str, str]] | None = None,
+) -> None:
+    entry = {
+        "id": uuid.uuid4().hex[:8],
+        "action": action,
+        "ok": ok,
+        "input_path": input_path,
+        "source_format": source_format or "auto",
+        "target_format": target_format or "-",
+        "output_path": output_path or "-",
+        "message": message,
+        "downloads": list(downloads or []),
+    }
+    ACTION_HISTORY.append(entry)
+    if len(ACTION_HISTORY) > MAX_ACTION_HISTORY:
+        del ACTION_HISTORY[:-MAX_ACTION_HISTORY]
+
+
+def render_history_panel(history: list[dict[str, Any]] | None = None, recent_downloads: list[dict[str, str]] | None = None) -> str:
+    history = history if history is not None else ACTION_HISTORY
+    recent_downloads = recent_downloads if recent_downloads is not None else _recent_downloads()
+    sections = ['<div class="history"><div class="panel-title">Recent Activity</div>']
+    if not history:
+        sections.append('<div class="history-item"><strong>No runs yet.</strong><div>Run a workflow to populate local session history.</div></div>')
+    else:
+        for item in history[::-1]:
+            state = "ok" if item["ok"] else "error"
+            sections.append(
+                f'<div class="history-item"><strong>{_html_escape(item["action"])} ? {state}</strong>'
+                f'<div>{_html_escape(item["message"])}</div>'
+                f'<div>input: {_html_escape(item["input_path"])}</div>'
+                f'<div>target: {_html_escape(item["target_format"])} ? output: {_html_escape(item["output_path"])}</div></div>'
+            )
+    if recent_downloads:
+        sections.append('<div class="panel-title">Recent Downloads</div>')
+        for item in recent_downloads:
+            sections.append(
+                f'<div class="history-item"><a href="{_html_escape(item["url"])}">{_html_escape(item["filename"])}</a>'
+                f'<div>{_html_escape(item["path"])}</div></div>'
+            )
+    sections.append('</div>')
+    return ''.join(sections)
 
 
 def render_download_links(downloads: list[dict[str, str]] | None) -> str:
@@ -472,10 +566,12 @@ class MemoryBridgeRequestHandler(BaseHTTPRequestHandler):
             status_class = "ok"
             downloads = result.get("downloads", [])
             output = json.dumps(result, indent=2, ensure_ascii=False)
+            record_action_history(action, True, input_path, source_format, target_format, output_path, message, downloads)
         except Exception as exc:
             message = f"Action '{action}' failed: {exc}"
             status_class = "error"
             output = json.dumps({"ok": False, "action": action, "error": str(exc)}, indent=2, ensure_ascii=False)
+            record_action_history(action, False, input_path, source_format, target_format, output_path, message, [])
         self._send_html(
             render_page(
                 action=action,
@@ -508,16 +604,20 @@ class MemoryBridgeRequestHandler(BaseHTTPRequestHandler):
         try:
             payload = upload.file.read()
             saved = save_uploaded_zip(getattr(upload, "filename", "upload.zip"), payload)
+            message = f"Uploaded and extracted zip into {saved['input_path']}"
+            record_action_history("upload", True, saved["input_path"], None, None, saved["zip_path"], message, [])
             self._send_html(
                 render_page(
                     input_path=saved["input_path"],
-                    message=f"Uploaded and extracted zip into {saved['input_path']}",
+                    message=message,
                     status_class="ok",
                     output=json.dumps(saved, indent=2, ensure_ascii=False),
                 )
             )
         except Exception as exc:
-            self._send_html(render_page(message=f"Upload failed: {exc}", status_class="error"))
+            message = f"Upload failed: {exc}"
+            record_action_history("upload", False, "", None, None, None, message, [])
+            self._send_html(render_page(message=message, status_class="error"))
 
     def _send_download(self, token: str) -> None:
         path = DOWNLOAD_REGISTRY.get(token)
@@ -556,6 +656,7 @@ def render_page(
     status_class: str = "",
     output: str = '{\n  "status": "idle"\n}',
     downloads: list[dict[str, str]] | None = None,
+    history: list[dict[str, Any]] | None = None,
 ) -> str:
     adapters = sorted(build_registry())
     profiles = sorted(list_profiles())
@@ -574,6 +675,7 @@ def render_page(
         status_class=_html_escape(status_class),
         output=_html_escape(output),
         download_links=render_download_links(downloads),
+        history_panel=render_history_panel(history, _recent_downloads()),
     )
 
 

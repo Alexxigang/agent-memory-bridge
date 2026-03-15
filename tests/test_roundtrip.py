@@ -21,7 +21,7 @@ from memory_migrate_plugin.verify import verify_manifest
 from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
 from memory_migrate_plugin.validate import validate_package, validate_package_file
 from memory_migrate_plugin.init_adapter import init_adapter
-from memory_migrate_plugin.serve import execute_web_action, register_download, render_page, save_uploaded_zip
+from memory_migrate_plugin.serve import ACTION_HISTORY, DOWNLOAD_REGISTRY, execute_web_action, record_action_history, register_download, render_history_panel, render_page, save_uploaded_zip
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -365,6 +365,26 @@ class MemoryMigrateTests(unittest.TestCase):
             self.assertTrue(Path(saved["zip_path"]).exists())
             self.assertTrue(Path(saved["input_path"]).exists())
 
+    def test_record_action_history_keeps_recent_entries_only(self) -> None:
+        ACTION_HISTORY.clear()
+        for index in range(15):
+            record_action_history(f"action-{index}", True, "input", None, None, None, "ok", [])
+        self.assertEqual(len(ACTION_HISTORY), 12)
+        self.assertEqual(ACTION_HISTORY[0]["action"], "action-3")
+
+    def test_render_history_panel_shows_activity_and_downloads(self) -> None:
+        ACTION_HISTORY.clear()
+        DOWNLOAD_REGISTRY.clear()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bundle = Path(tmpdir) / "bundle.zip"
+            bundle.write_bytes(b"demo")
+            download = register_download(bundle)
+            record_action_history("bundle", True, "fixtures/generic-json/sample.json", "generic-json", "codex-memories", str(bundle), "done", [download])
+            html = render_history_panel()
+            self.assertIn("Recent Activity", html)
+            self.assertIn("Recent Downloads", html)
+            self.assertIn("bundle.zip", html)
+
     def test_register_download_returns_local_download_url(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             target = Path(tmpdir) / "bundle.zip"
@@ -391,6 +411,7 @@ class MemoryMigrateTests(unittest.TestCase):
         html = render_page()
         self.assertIn("Agent Memory Bridge", html)
         self.assertIn("Run Workflow", html)
+        self.assertIn("Recent Activity", html)
 
     def test_execute_web_action_detect_returns_matches(self) -> None:
         result = execute_web_action("detect", "fixtures/generic-json/sample.json")
