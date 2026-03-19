@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import tempfile
@@ -134,6 +134,7 @@ class MemoryMigrateTests(unittest.TestCase):
             "fixtures/agents-md": "agents-md",
             "fixtures/cursor-rules": "cursor-rules",
             "fixtures/claude-project": "claude-project",
+            "fixtures/openhands-repo": "openhands-repo",
         }
         for raw_path, expected in fixtures.items():
             matches = detect_format(Path(raw_path))
@@ -170,6 +171,32 @@ class MemoryMigrateTests(unittest.TestCase):
             self.assertEqual(len(package.entries), 1)
             self.assertEqual(package.entries[0].kind, "instruction")
             self.assertEqual(package.entries[0].metadata["globs"], "src/**/*.py")
+
+    def test_detect_format_prefers_openhands_repo(self) -> None:
+        matches = detect_format(Path("fixtures/openhands-repo"))
+        self.assertEqual(matches[0][0], "openhands-repo")
+
+    def test_openhands_repo_adapter_reads_repo_assets(self) -> None:
+        package = normalize("openhands-repo", Path("fixtures/openhands-repo"))
+        self.assertEqual(len(package.entries), 6)
+        roles = sorted(entry.metadata.get("openhands_role") for entry in package.entries)
+        self.assertIn("agents", roles)
+        self.assertIn("skill", roles)
+        self.assertIn("microagent", roles)
+        self.assertIn("setup-script", roles)
+        self.assertIn("pre-commit-script", roles)
+
+    def test_openhands_repo_adapter_writes_expected_layout(self) -> None:
+        package = normalize("openhands-repo", Path("fixtures/openhands-repo"))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from memory_migrate_plugin.core import convert
+            target = Path(tmpdir) / "openhands-out"
+            convert("openhands-repo", Path("fixtures/openhands-repo"), "openhands-repo", target)
+            self.assertTrue((target / "AGENTS.md").exists())
+            self.assertTrue((target / ".openhands" / "setup.sh").exists())
+            self.assertTrue((target / ".openhands" / "pre-commit.sh").exists())
+            self.assertTrue((target / ".agents" / "skills" / "release-checklist" / "SKILL.md").exists())
+            self.assertTrue((target / ".openhands" / "microagents" / "repo.md").exists())
 
     def test_claude_project_adapter_reads_main_and_memory_notes(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

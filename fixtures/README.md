@@ -16,3 +16,5 @@ Available sample sets:
 - `agents-md/`: `AGENTS.md` plus `.agents/notes`
 - `cursor-rules/`: `.cursor/rules` instruction bundle
 - `claude-project/`: `CLAUDE.md` plus `.claude/memories`
+
+- `openhands-repo/`: OpenHands repository customization sample with scripts, skills, and microagents

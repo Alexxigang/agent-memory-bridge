@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.27.0 - 2026-03-19
+
+- added an `openhands-repo` adapter for OpenHands repository customizations
+- added official fixtures and roundtrip coverage for OpenHands scripts, skills, and microagents
+
+## Unreleased
+
+- made local `pytest` collection work reliably with the repository `src/` layout
+- added reusable CLI smoke tests for `adapters`, `profiles`, `bundle`, and `verify`
+- clarified contributor test commands so editable install is the only required setup step
+
 ## 0.26.0 - 2026-03-15
 
 - added in-session workflow history and recent download tracking to the local web UI

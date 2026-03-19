@@ -11,12 +11,14 @@ from memory_migrate_plugin.adapters import (
     CursorRulesAdapter,
     GenericJsonAdapter,
     MarkdownBundleAdapter,
+    OpenHandsRepoAdapter,
 )
 
 
 def build_registry() -> dict[str, BaseAdapter]:
     adapters = [
         GenericJsonAdapter(),
+        OpenHandsRepoAdapter(),
         AgentsMdAdapter(),
         ClaudeProjectAdapter(),
         CursorRulesAdapter(),

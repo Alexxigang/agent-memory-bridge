@@ -6,6 +6,7 @@ from .codex_memories import CodexMemoriesAdapter
 from .cursor_rules import CursorRulesAdapter
 from .generic_json import GenericJsonAdapter
 from .markdown_bundle import MarkdownBundleAdapter
+from .openhands_repo import OpenHandsRepoAdapter
 
 __all__ = [
     "BaseAdapter",
@@ -16,4 +17,5 @@ __all__ = [
     "CursorRulesAdapter",
     "ClaudeProjectAdapter",
     "AgentsMdAdapter",
+    "OpenHandsRepoAdapter",
 ]
