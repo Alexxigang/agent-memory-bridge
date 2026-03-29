@@ -5,6 +5,7 @@ from pathlib import Path
 from memory_migrate_plugin.adapters import (
     AgentsMdAdapter,
     BaseAdapter,
+    ClaudeCodeMemoryAdapter,
     ClaudeProjectAdapter,
     ClineMemoryBankAdapter,
     CodexMemoriesAdapter,
@@ -20,6 +21,7 @@ def build_registry() -> dict[str, BaseAdapter]:
         GenericJsonAdapter(),
         OpenHandsRepoAdapter(),
         AgentsMdAdapter(),
+        ClaudeCodeMemoryAdapter(),
         ClaudeProjectAdapter(),
         CursorRulesAdapter(),
         MarkdownBundleAdapter(),

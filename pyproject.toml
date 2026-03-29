@@ -1,10 +1,10 @@
-[build-system]
+﻿[build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "memory-migrate-plugin"
-version = "0.27.0"
+version = "0.28.0"
 description = "Open-source toolkit for migrating memories across AI agent systems."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -31,3 +31,4 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+

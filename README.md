@@ -1,4 +1,4 @@
-# Agent Memory Bridge
+﻿# Agent Memory Bridge
 
 [![CI](https://github.com/Alexxigang/agent-memory-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/Alexxigang/agent-memory-bridge/actions/workflows/ci.yml)
 [![Release](https://github.com/Alexxigang/agent-memory-bridge/actions/workflows/release.yml/badge.svg)](https://github.com/Alexxigang/agent-memory-bridge/actions/workflows/release.yml)
@@ -44,6 +44,7 @@ This project solves that with a portable canonical memory package plus adapter-b
 - `codex-memories`
 - `cline-memory-bank`
 - `cursor-rules`
+- `claude-code-memory`
 - `claude-project`
 - `agents-md`
 - `openhands-repo`
@@ -159,3 +160,4 @@ See `CONTRIBUTING.md`.
 ## License
 
 MIT
+

@@ -1,4 +1,4 @@
-# Fixtures
+﻿# Fixtures
 
 This directory contains official sample inputs for Agent Memory Bridge.
 
@@ -18,3 +18,6 @@ Available sample sets:
 - `claude-project/`: `CLAUDE.md` plus `.claude/memories`
 
 - `openhands-repo/`: OpenHands repository customization sample with scripts, skills, and microagents
+
+- claude-code-memory/: Modern Claude Code memory sample with imports, local overrides, and nested CLAUDE.md files
+

@@ -1,6 +1,11 @@
-# Changelog
+﻿# Changelog
 
-## 0.27.0 - 2026-03-19
+## 0.28.0 - 2026-03-29
+
+- added a claude-code-memory adapter for recursive CLAUDE.md layouts, local overrides, and @path imports
+- added fixtures and roundtrip coverage for modern Claude Code repository memory
+
+## 0.28.0 - 2026-03-19
 
 - added an `openhands-repo` adapter for OpenHands repository customizations
 - added official fixtures and roundtrip coverage for OpenHands scripts, skills, and microagents
@@ -163,3 +168,5 @@
 - added CLI for inspect, normalize, and convert
 - added initial adapters for generic JSON, markdown bundle, Codex memories, and Cline Memory Bank
 - added baseline tests
+
+

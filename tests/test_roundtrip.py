@@ -133,6 +133,7 @@ class MemoryMigrateTests(unittest.TestCase):
             "fixtures/cline-memory-bank": "cline-memory-bank",
             "fixtures/agents-md": "agents-md",
             "fixtures/cursor-rules": "cursor-rules",
+            "fixtures/claude-code-memory": "claude-code-memory",
             "fixtures/claude-project": "claude-project",
             "fixtures/openhands-repo": "openhands-repo",
         }
@@ -157,6 +158,10 @@ class MemoryMigrateTests(unittest.TestCase):
             (root / "CLAUDE.md").write_text("Project guidance", encoding="utf-8")
             matches = detect_format(root)
             self.assertEqual(matches[0][0], "claude-project")
+
+    def test_detect_format_prefers_claude_code_memory_for_modern_layout(self) -> None:
+        matches = detect_format(Path("fixtures/claude-code-memory"))
+        self.assertEqual(matches[0][0], "claude-code-memory")
 
     def test_cursor_rules_adapter_reads_instruction_entries(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -208,6 +213,27 @@ class MemoryMigrateTests(unittest.TestCase):
             package = normalize("claude-project", root)
             self.assertEqual(len(package.entries), 2)
             self.assertEqual(package.entries[0].title, "Claude Project Memory")
+
+    def test_claude_code_memory_reads_recursive_files_and_imports(self) -> None:
+        package = normalize("claude-code-memory", Path("fixtures/claude-code-memory"))
+        self.assertEqual(len(package.entries), 5)
+        roles = sorted(entry.metadata.get("claude_code_role") for entry in package.entries)
+        self.assertIn("memory-file", roles)
+        self.assertIn("local-memory", roles)
+        self.assertIn("imported-file", roles)
+        root_entry = next(entry for entry in package.entries if entry.metadata.get("relative_path") == "CLAUDE.md")
+        self.assertIn(".claude/imports/testing.md", root_entry.metadata["imports"])
+
+    def test_claude_code_memory_writes_expected_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from memory_migrate_plugin.core import convert
+
+            target = Path(tmpdir) / "claude-code-out"
+            convert("claude-code-memory", Path("fixtures/claude-code-memory"), "claude-code-memory", target)
+            self.assertTrue((target / "CLAUDE.md").exists())
+            self.assertTrue((target / "CLAUDE.local.md").exists())
+            self.assertTrue((target / ".claude" / "imports" / "testing.md").exists())
+            self.assertTrue((target / "services" / "api" / "CLAUDE.md").exists())
 
     def test_merge_packages_dedupes_duplicate_entries(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
