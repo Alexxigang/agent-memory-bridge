@@ -36,12 +36,14 @@ This project solves that with a portable canonical memory package plus adapter-b
 - scaffold new adapter integrations with a generated starter template
 - run a local web UI for interactive migration workflows
 - migrate OpenHands repository customizations, scripts, skills, and microagents
+- migrate Codex repository-scoped AGENTS instructions and overrides
 
 ## Supported formats
 
 - `generic-json`
 - `markdown-bundle`
-- `codex-memories`
+- codex-memories
+- codex-repo
 - `cline-memory-bank`
 - `cursor-rules`
 - `claude-code-memory`
@@ -160,4 +162,5 @@ See `CONTRIBUTING.md`.
 ## License
 
 MIT
+
 

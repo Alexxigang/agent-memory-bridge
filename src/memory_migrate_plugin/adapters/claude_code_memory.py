@@ -21,7 +21,7 @@ class ClaudeCodeMemoryAdapter(BaseAdapter):
             return path.name in MEMORY_FILENAMES
         if not path.is_dir():
             return False
-        return any(path.rglob(filename) for filename in MEMORY_FILENAMES)
+        return any(any(path.rglob(filename)) for filename in MEMORY_FILENAMES)
 
     def detect_confidence(self, path: Path) -> int:
         if not self.probe(path):

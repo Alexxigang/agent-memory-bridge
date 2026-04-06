@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+## 0.29.0 - 2026-04-06
+
+- added a codex-repo adapter for recursive AGENTS.md and AGENTS.override.md repository scopes
+- added fixtures and roundtrip coverage for Codex repository instruction layouts
+
 ## 0.28.0 - 2026-03-29
 
 - added a claude-code-memory adapter for recursive CLAUDE.md layouts, local overrides, and @path imports
@@ -168,5 +173,6 @@
 - added CLI for inspect, normalize, and convert
 - added initial adapters for generic JSON, markdown bundle, Codex memories, and Cline Memory Bank
 - added baseline tests
+
 
 

@@ -133,6 +133,7 @@ class MemoryMigrateTests(unittest.TestCase):
             "fixtures/cline-memory-bank": "cline-memory-bank",
             "fixtures/agents-md": "agents-md",
             "fixtures/cursor-rules": "cursor-rules",
+            "fixtures/codex-repo": "codex-repo",
             "fixtures/claude-code-memory": "claude-code-memory",
             "fixtures/claude-project": "claude-project",
             "fixtures/openhands-repo": "openhands-repo",
@@ -151,6 +152,29 @@ class MemoryMigrateTests(unittest.TestCase):
             package = normalize("agents-md", root)
             self.assertEqual(len(package.entries), 2)
             self.assertEqual(package.entries[0].title, "AGENTS Instructions")
+
+    def test_detect_format_prefers_codex_repo(self) -> None:
+        matches = detect_format(Path("fixtures/codex-repo"))
+        self.assertEqual(matches[0][0], "codex-repo")
+
+    def test_codex_repo_reads_recursive_agents_documents(self) -> None:
+        package = normalize("codex-repo", Path("fixtures/codex-repo"))
+        self.assertEqual(len(package.entries), 4)
+        override_entry = next(entry for entry in package.entries if entry.metadata.get("codex_role") == "override")
+        self.assertEqual(override_entry.metadata["scope_dir"], "apps/web")
+        root_entry = next(entry for entry in package.entries if entry.metadata.get("relative_path") == "AGENTS.md")
+        self.assertEqual(root_entry.metadata["scope_dir"], ".")
+
+    def test_codex_repo_writes_expected_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            from memory_migrate_plugin.core import convert
+
+            target = Path(tmpdir) / "codex-repo-out"
+            convert("codex-repo", Path("fixtures/codex-repo"), "codex-repo", target)
+            self.assertTrue((target / "AGENTS.md").exists())
+            self.assertTrue((target / "apps" / "web" / "AGENTS.md").exists())
+            self.assertTrue((target / "apps" / "web" / "AGENTS.override.md").exists())
+            self.assertTrue((target / "apps" / "api" / "AGENTS.md").exists())
 
     def test_detect_format_prefers_claude_project(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

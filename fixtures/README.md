@@ -21,3 +21,6 @@ Available sample sets:
 
 - claude-code-memory/: Modern Claude Code memory sample with imports, local overrides, and nested CLAUDE.md files
 
+
+- codex-repo/: Codex repository instructions sample with recursive AGENTS.md and AGENTS.override.md scopes
+

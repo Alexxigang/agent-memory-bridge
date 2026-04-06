@@ -9,6 +9,7 @@ from memory_migrate_plugin.adapters import (
     ClaudeProjectAdapter,
     ClineMemoryBankAdapter,
     CodexMemoriesAdapter,
+    CodexRepoAdapter,
     CursorRulesAdapter,
     GenericJsonAdapter,
     MarkdownBundleAdapter,
@@ -20,6 +21,7 @@ def build_registry() -> dict[str, BaseAdapter]:
     adapters = [
         GenericJsonAdapter(),
         OpenHandsRepoAdapter(),
+        CodexRepoAdapter(),
         AgentsMdAdapter(),
         ClaudeCodeMemoryAdapter(),
         ClaudeProjectAdapter(),

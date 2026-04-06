@@ -4,6 +4,7 @@ from .claude_project import ClaudeProjectAdapter
 from .claude_code_memory import ClaudeCodeMemoryAdapter
 from .cline_memory_bank import ClineMemoryBankAdapter
 from .codex_memories import CodexMemoriesAdapter
+from .codex_repo import CodexRepoAdapter
 from .cursor_rules import CursorRulesAdapter
 from .generic_json import GenericJsonAdapter
 from .markdown_bundle import MarkdownBundleAdapter
@@ -14,6 +15,7 @@ __all__ = [
     "GenericJsonAdapter",
     "MarkdownBundleAdapter",
     "CodexMemoriesAdapter",
+    "CodexRepoAdapter",
     "ClineMemoryBankAdapter",
     "CursorRulesAdapter",
     "ClaudeProjectAdapter",
