@@ -199,6 +199,44 @@ HTML_PAGE = Template("""<!doctype html>
       padding-top: 0;
     }
     .history-item strong { color: var(--ink); }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .summary-card {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      display: grid;
+      gap: 6px;
+    }
+    .summary-card.ok {
+      border-color: rgba(15, 118, 110, 0.28);
+      background: rgba(15, 118, 110, 0.07);
+    }
+    .summary-card.warn {
+      border-color: rgba(180, 83, 9, 0.32);
+      background: rgba(180, 83, 9, 0.08);
+    }
+    .summary-card.error {
+      border-color: rgba(185, 28, 28, 0.28);
+      background: rgba(185, 28, 28, 0.08);
+    }
+    .summary-label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .summary-value {
+      color: var(--ink);
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.2;
+      word-break: break-word;
+    }
     .downloads a {
       color: var(--accent);
       font-weight: 700;
@@ -295,6 +333,7 @@ HTML_PAGE = Template("""<!doctype html>
       </div>
       <div class="card output">
         <div class="banner $status_class">$message</div>
+        $summary_cards
         $download_links
         $history_panel
         <pre>$output</pre>
@@ -442,6 +481,105 @@ def render_history_panel(history: list[dict[str, Any]] | None = None, recent_dow
     return ''.join(sections)
 
 
+def summarize_action_result(action: str, result: dict[str, Any] | None) -> list[dict[str, str]]:
+    if not result:
+        return []
+    payload = result.get("result", {})
+    cards: list[dict[str, str]] = []
+
+    def add(label: str, value: Any, tone: str = "") -> None:
+        if value is None:
+            return
+        rendered = str(value)
+        if not rendered.strip():
+            return
+        cards.append({"label": label, "value": rendered, "tone": tone})
+
+    if action == "detect":
+        matches = payload.get("matches", [])
+        add("Matches", len(matches), "ok")
+        if matches:
+            add("Top Format", matches[0][0], "ok")
+            add("Confidence", f"{matches[0][1]}%")
+        return cards
+
+    if action == "inspect":
+        add("Package", payload.get("package_id"), "ok")
+        add("Entries", payload.get("entry_count"), "ok")
+        add("Kinds", len(payload.get("kinds", [])))
+        return cards
+
+    if action == "normalize":
+        add("Package", payload.get("package_id"), "ok")
+        add("Entries", payload.get("entry_count"), "ok")
+        add("Output", Path(payload.get("output_path", "")).name if payload.get("output_path") else None)
+        return cards
+
+    if action == "validate":
+        summary = payload.get("summary", {})
+        is_ok = bool(payload.get("ok"))
+        add("Status", "Valid" if is_ok else "Invalid", "ok" if is_ok else "error")
+        add("Errors", summary.get("error_count", 0), "error" if summary.get("error_count", 0) else "ok")
+        add("Warnings", summary.get("warning_count", 0), "warn" if summary.get("warning_count", 0) else "ok")
+        add("Entries", summary.get("entry_count", 0))
+        return cards
+
+    if action == "report":
+        audit = payload.get("audit", {})
+        add("Package", payload.get("package_id"), "ok")
+        add("Entries", payload.get("entry_count", 0), "ok")
+        add("Issues", audit.get("issues_found", 0), "warn" if audit.get("issues_found", 0) else "ok")
+        add("Formats", len(payload.get("source_formats", [])))
+        return cards
+
+    if action == "doctor":
+        summary = payload.get("doctor_summary", {})
+        add("Health", summary.get("health_score", 0), "ok" if summary.get("health_score", 0) >= 80 else "warn")
+        add("Issues", summary.get("issue_count", 0), "warn" if summary.get("issue_count", 0) else "ok")
+        add("Suggestions", summary.get("suggestion_count", 0), "warn" if summary.get("suggestion_count", 0) else "ok")
+        add("Repairable", summary.get("repairable_entry_count", 0))
+        return cards
+
+    if action == "suggest":
+        add("Suggestions", payload.get("suggestion_count", 0), "warn" if payload.get("suggestion_count", 0) else "ok")
+        if payload.get("suggestions"):
+            add("Top Severity", payload["suggestions"][0].get("severity", "unknown"))
+        return cards
+
+    if action == "bundle":
+        add("Entries", payload.get("export_entry_count") or payload.get("entry_count"), "ok")
+        add("Target", payload.get("output", {}).get("target_format") if isinstance(payload.get("output"), dict) else payload.get("target_format"), "ok")
+        doctor_summary = payload.get("doctor_summary", {})
+        add("Health", doctor_summary.get("health_score"), "warn" if doctor_summary.get("health_score", 100) < 80 else "ok")
+        add("Downloads", len(result.get("downloads", [])), "ok")
+        return cards
+
+    if action == "schema":
+        add("Schema", payload.get("title"), "ok")
+        add("Version", payload.get("properties", {}).get("schema_version", {}).get("default", "1.0"))
+        add("Entry Fields", len(payload.get("$defs", {}).get("memoryEntry", {}).get("required", [])))
+        return cards
+
+    return cards
+
+
+def render_summary_cards(cards: list[dict[str, str]] | None) -> str:
+    if not cards:
+        return ""
+    rows = ['<div class="summary-grid">']
+    for item in cards:
+        tone = str(item.get("tone", "")).strip()
+        tone_class = f" {tone}" if tone else ""
+        rows.append(
+            f'<div class="summary-card{tone_class}">'
+            f'<div class="summary-label">{_html_escape(item["label"])}</div>'
+            f'<div class="summary-value">{_html_escape(item["value"])}</div>'
+            '</div>'
+        )
+    rows.append('</div>')
+    return ''.join(rows)
+
+
 def render_download_links(downloads: list[dict[str, str]] | None) -> str:
     if not downloads:
         return ""
@@ -565,11 +703,13 @@ class MemoryBridgeRequestHandler(BaseHTTPRequestHandler):
             message = f"Action '{action}' completed successfully."
             status_class = "ok"
             downloads = result.get("downloads", [])
+            summary_cards = summarize_action_result(action, result)
             output = json.dumps(result, indent=2, ensure_ascii=False)
             record_action_history(action, True, input_path, source_format, target_format, output_path, message, downloads)
         except Exception as exc:
             message = f"Action '{action}' failed: {exc}"
             status_class = "error"
+            summary_cards = []
             output = json.dumps({"ok": False, "action": action, "error": str(exc)}, indent=2, ensure_ascii=False)
             record_action_history(action, False, input_path, source_format, target_format, output_path, message, [])
         self._send_html(
@@ -585,6 +725,7 @@ class MemoryBridgeRequestHandler(BaseHTTPRequestHandler):
                 status_class=status_class,
                 output=output,
                 downloads=downloads,
+                summary_cards=summary_cards,
             )
         )
 
@@ -612,6 +753,11 @@ class MemoryBridgeRequestHandler(BaseHTTPRequestHandler):
                     message=message,
                     status_class="ok",
                     output=json.dumps(saved, indent=2, ensure_ascii=False),
+                    summary_cards=[
+                        {"label": "Upload", "value": Path(saved["zip_path"]).name, "tone": "ok"},
+                        {"label": "Workspace", "value": saved["workspace_id"]},
+                        {"label": "Extracted", "value": Path(saved["input_path"]).name or saved["input_path"]},
+                    ],
                 )
             )
         except Exception as exc:
@@ -657,6 +803,7 @@ def render_page(
     output: str = '{\n  "status": "idle"\n}',
     downloads: list[dict[str, str]] | None = None,
     history: list[dict[str, Any]] | None = None,
+    summary_cards: list[dict[str, str]] | None = None,
 ) -> str:
     adapters = sorted(build_registry())
     profiles = sorted(list_profiles())
@@ -674,6 +821,7 @@ def render_page(
         message=_html_escape(message),
         status_class=_html_escape(status_class),
         output=_html_escape(output),
+        summary_cards=render_summary_cards(summary_cards),
         download_links=render_download_links(downloads),
         history_panel=render_history_panel(history, _recent_downloads()),
     )

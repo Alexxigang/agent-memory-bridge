@@ -21,7 +21,7 @@ from memory_migrate_plugin.verify import verify_manifest
 from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
 from memory_migrate_plugin.validate import validate_package, validate_package_file
 from memory_migrate_plugin.init_adapter import init_adapter
-from memory_migrate_plugin.serve import ACTION_HISTORY, DOWNLOAD_REGISTRY, execute_web_action, record_action_history, register_download, render_history_panel, render_page, save_uploaded_zip
+from memory_migrate_plugin.serve import ACTION_HISTORY, DOWNLOAD_REGISTRY, execute_web_action, record_action_history, register_download, render_history_panel, render_page, render_summary_cards, save_uploaded_zip, summarize_action_result
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -449,6 +449,26 @@ class MemoryMigrateTests(unittest.TestCase):
         self.assertEqual(len(ACTION_HISTORY), 12)
         self.assertEqual(ACTION_HISTORY[0]["action"], "action-3")
 
+    def test_summarize_action_result_for_validate_has_status_cards(self) -> None:
+        result = {
+            "ok": True,
+            "action": "validate",
+            "result": {
+                "ok": False,
+                "summary": {"error_count": 2, "warning_count": 1, "entry_count": 3, "duplicate_id_count": 1},
+            },
+        }
+        cards = summarize_action_result("validate", result)
+        labels = [item["label"] for item in cards]
+        self.assertIn("Status", labels)
+        self.assertIn("Errors", labels)
+
+    def test_render_summary_cards_outputs_card_markup(self) -> None:
+        html = render_summary_cards([{"label": "Health", "value": "95", "tone": "ok"}])
+        self.assertIn("summary-card ok", html)
+        self.assertIn("Health", html)
+        self.assertIn("95", html)
+
     def test_render_history_panel_shows_activity_and_downloads(self) -> None:
         ACTION_HISTORY.clear()
         DOWNLOAD_REGISTRY.clear()
@@ -489,6 +509,7 @@ class MemoryMigrateTests(unittest.TestCase):
         self.assertIn("Agent Memory Bridge", html)
         self.assertIn("Run Workflow", html)
         self.assertIn("Recent Activity", html)
+        self.assertIn("summary-grid", render_page(summary_cards=[{"label": "Entries", "value": "3", "tone": "ok"}]))
 
     def test_execute_web_action_detect_returns_matches(self) -> None:
         result = execute_web_action("detect", "fixtures/generic-json/sample.json")
