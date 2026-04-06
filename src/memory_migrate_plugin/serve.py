@@ -14,6 +14,7 @@ from urllib.parse import parse_qs, urlparse
 from memory_migrate_plugin.bundle import run_bundle
 from memory_migrate_plugin.core import export_canonical_json, normalize
 from memory_migrate_plugin.doctor import build_doctor_report
+from memory_migrate_plugin.recommend import recommend_migration_targets
 from memory_migrate_plugin.profiles import list_profiles
 from memory_migrate_plugin.registry import build_registry, detect_format
 from memory_migrate_plugin.report import build_package_report
@@ -554,6 +555,15 @@ def summarize_action_result(action: str, result: dict[str, Any] | None) -> list[
         add("Downloads", len(result.get("downloads", [])), "ok")
         return cards
 
+    if action == "recommend":
+        source = payload.get("source", {})
+        recommendations = payload.get("recommendations", [])
+        add("Detected", source.get("detected_format"), "ok")
+        add("Candidates", len(source.get("candidate_formats", [])))
+        add("Recommended", recommendations[0].get("target_format") if recommendations else None, "ok")
+        add("Profile", recommendations[0].get("recommended_profile") if recommendations else None)
+        return cards
+
     if action == "schema":
         add("Schema", payload.get("title"), "ok")
         add("Version", payload.get("properties", {}).get("schema_version", {}).get("default", "1.0"))
@@ -646,6 +656,8 @@ def execute_web_action(
     if action == "suggest":
         package = normalize(source_format, source)
         return {"ok": True, "action": action, "result": build_package_suggestions(package), "downloads": []}
+    if action == "recommend":
+        return {"ok": True, "action": action, "result": recommend_migration_targets(source, source_format), "downloads": []}
     if action == "bundle":
         if not target_format:
             raise ValueError("bundle requires a target format")
@@ -807,7 +819,7 @@ def render_page(
 ) -> str:
     adapters = sorted(build_registry())
     profiles = sorted(list_profiles())
-    actions = ["detect", "inspect", "normalize", "validate", "report", "doctor", "suggest", "bundle", "schema"]
+    actions = ["detect", "inspect", "normalize", "validate", "report", "doctor", "suggest", "recommend", "bundle", "schema"]
     return HTML_PAGE.substitute(
         adapter_count=len(adapters),
         profile_count=len(profiles),

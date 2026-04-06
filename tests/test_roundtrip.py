@@ -14,6 +14,7 @@ from memory_migrate_plugin.merge import merge_packages, merge_packages_detailed
 from memory_migrate_plugin.registry import detect_format
 from memory_migrate_plugin.release import run_release
 from memory_migrate_plugin.repair import repair_package
+from memory_migrate_plugin.recommend import recommend_migration_targets
 from memory_migrate_plugin.report import build_merge_report, build_package_report
 from memory_migrate_plugin.suggest import build_package_suggestions
 from memory_migrate_plugin.manifest import build_manifest
@@ -489,6 +490,19 @@ class MemoryMigrateTests(unittest.TestCase):
             item = register_download(target)
             self.assertTrue(item["url"].startswith("/download?token="))
             self.assertEqual(item["filename"], "bundle.zip")
+
+    def test_recommend_migration_targets_prefers_repo_destinations_for_openhands(self) -> None:
+        result = recommend_migration_targets(Path("fixtures/openhands-repo"))
+        self.assertEqual(result["source"]["detected_format"], "openhands-repo")
+        self.assertGreaterEqual(result["recommendation_count"], 1)
+        self.assertIn(result["recommendations"][0]["target_format"], {"codex-repo", "claude-code-memory", "agents-md"})
+
+    def test_execute_web_action_recommend_returns_top_target(self) -> None:
+        result = execute_web_action("recommend", "fixtures/claude-code-memory")
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["action"], "recommend")
+        self.assertGreaterEqual(result["result"]["recommendation_count"], 1)
+        self.assertIn("recommended_profile", result["result"]["recommendations"][0])
 
     def test_execute_web_action_bundle_returns_downloads(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

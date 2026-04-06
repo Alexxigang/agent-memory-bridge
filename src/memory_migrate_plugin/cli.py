@@ -16,6 +16,7 @@ from memory_migrate_plugin.profiles import list_profiles
 from memory_migrate_plugin.registry import build_registry, detect_format
 from memory_migrate_plugin.release import run_release
 from memory_migrate_plugin.repair import repair_package
+from memory_migrate_plugin.recommend import recommend_migration_targets
 from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
 from memory_migrate_plugin.serve import serve_web_ui
 from memory_migrate_plugin.report import build_merge_report, build_package_report
@@ -111,6 +112,11 @@ def build_parser() -> argparse.ArgumentParser:
     suggest_parser.add_argument("--format")
     suggest_parser.add_argument("--input", required=True)
     suggest_parser.add_argument("--output")
+
+    recommend_parser = subparsers.add_parser("recommend", help="Recommend target adapters and profiles for a source.")
+    recommend_parser.add_argument("--format")
+    recommend_parser.add_argument("--input", required=True)
+    recommend_parser.add_argument("--output")
 
     repair_parser = subparsers.add_parser("repair", help="Generate a repaired canonical package without overwriting the source.")
     repair_parser.add_argument("--format")
@@ -331,6 +337,16 @@ def command_suggest(source_format: str | None, source_path: Path, output_path: s
     return 0
 
 
+def command_recommend(source_format: str | None, source_path: Path, output_path: str | None) -> int:
+    recommendations = recommend_migration_targets(source_path, source_format)
+    if output_path:
+        write_json(Path(output_path), recommendations)
+        print(f"Wrote recommendations to {output_path}")
+    else:
+        print(json.dumps(recommendations, indent=2, ensure_ascii=False))
+    return 0
+
+
 def command_repair(source_format: str | None, source_path: Path, output_path: Path, report_output: str | None) -> int:
     package = normalize(source_format, source_path)
     repaired_package, repair_summary = repair_package(package)
@@ -412,6 +428,8 @@ def main() -> int:
         return command_report(args.format, Path(args.input), args.output)
     if args.command == "suggest":
         return command_suggest(args.format, Path(args.input), args.output)
+    if args.command == "recommend":
+        return command_recommend(args.format, Path(args.input), args.output)
     if args.command == "repair":
         return command_repair(args.format, Path(args.input), Path(args.output), args.report_output)
     if args.command == "doctor":

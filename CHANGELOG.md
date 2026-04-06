@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+## 0.31.0 - 2026-04-06
+
+- added target adapter and profile recommendations for CLI and local web UI workflows
+- added recommendation heuristics based on detected source format and canonical memory makeup
+
 ## 0.30.0 - 2026-04-06
 
 - added a codex-repo adapter for recursive AGENTS.md and AGENTS.override.md repository scopes
