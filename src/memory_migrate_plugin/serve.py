@@ -244,6 +244,36 @@ HTML_PAGE = Template("""<!doctype html>
       text-decoration: none;
     }
     .downloads a:hover { text-decoration: underline; }
+    .comparison {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+    }
+    .comparison-item {
+      display: grid;
+      gap: 6px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(216, 201, 177, 0.7);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .comparison-item:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+    .comparison-item strong { color: var(--ink); }
+    .comparison-chip {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.10);
+      color: #0f4d48;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
     pre {
       margin: 0;
       white-space: pre-wrap;
@@ -335,6 +365,7 @@ HTML_PAGE = Template("""<!doctype html>
       <div class="card output">
         <div class="banner $status_class">$message</div>
         $summary_cards
+        $comparison_panel
         $download_links
         $history_panel
         <pre>$output</pre>
@@ -573,6 +604,30 @@ def summarize_action_result(action: str, result: dict[str, Any] | None) -> list[
     return cards
 
 
+def render_recommendation_comparison(result: dict[str, Any] | None) -> str:
+    if not result or result.get("action") != "recommend":
+        return ""
+    comparison = result.get("result", {}).get("comparison", [])
+    if not comparison:
+        return ""
+    rows = ['<div class="comparison"><div class="panel-title">Recommendation Comparison</div>']
+    for item in comparison:
+        rows.append(
+            f'<div class="comparison-item"><strong>{_html_escape(item["target_format"])} ? {_html_escape(item["recommended_profile"])} ? score {item["score"]}</strong>'
+            f'<div>{_html_escape(item["top_reason"])}</div>'
+        )
+        strengths = item.get("strengths", [])
+        if strengths:
+            chips = ''.join(f'<span class="comparison-chip">{_html_escape(strength)}</span>' for strength in strengths)
+            rows.append(f'<div>{chips}</div>')
+        why_not_top = item.get("why_not_top", [])
+        if why_not_top:
+            rows.append(f'<div>Why not top: {_html_escape(why_not_top[0])}</div>')
+        rows.append('</div>')
+    rows.append('</div>')
+    return ''.join(rows)
+
+
 def render_summary_cards(cards: list[dict[str, str]] | None) -> str:
     if not cards:
         return ""
@@ -716,12 +771,14 @@ class MemoryBridgeRequestHandler(BaseHTTPRequestHandler):
             status_class = "ok"
             downloads = result.get("downloads", [])
             summary_cards = summarize_action_result(action, result)
+            comparison_panel = render_recommendation_comparison(result)
             output = json.dumps(result, indent=2, ensure_ascii=False)
             record_action_history(action, True, input_path, source_format, target_format, output_path, message, downloads)
         except Exception as exc:
             message = f"Action '{action}' failed: {exc}"
             status_class = "error"
             summary_cards = []
+            comparison_panel = ""
             output = json.dumps({"ok": False, "action": action, "error": str(exc)}, indent=2, ensure_ascii=False)
             record_action_history(action, False, input_path, source_format, target_format, output_path, message, [])
         self._send_html(
@@ -738,6 +795,7 @@ class MemoryBridgeRequestHandler(BaseHTTPRequestHandler):
                 output=output,
                 downloads=downloads,
                 summary_cards=summary_cards,
+                comparison_panel=comparison_panel,
             )
         )
 
@@ -816,6 +874,7 @@ def render_page(
     downloads: list[dict[str, str]] | None = None,
     history: list[dict[str, Any]] | None = None,
     summary_cards: list[dict[str, str]] | None = None,
+    comparison_panel: str = "",
 ) -> str:
     adapters = sorted(build_registry())
     profiles = sorted(list_profiles())
@@ -834,6 +893,7 @@ def render_page(
         status_class=_html_escape(status_class),
         output=_html_escape(output),
         summary_cards=render_summary_cards(summary_cards),
+        comparison_panel=comparison_panel,
         download_links=render_download_links(downloads),
         history_panel=render_history_panel(history, _recent_downloads()),
     )

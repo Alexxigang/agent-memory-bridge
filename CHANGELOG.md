@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+## 0.32.0 - 2026-04-06
+
+- added why-not explanations and top-target comparison output for migration recommendations
+- added recommendation comparison rendering in the local web UI
+
 ## 0.31.0 - 2026-04-06
 
 - added target adapter and profile recommendations for CLI and local web UI workflows

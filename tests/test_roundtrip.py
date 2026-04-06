@@ -22,7 +22,7 @@ from memory_migrate_plugin.verify import verify_manifest
 from memory_migrate_plugin.schema import build_canonical_package_schema, write_canonical_package_schema
 from memory_migrate_plugin.validate import validate_package, validate_package_file
 from memory_migrate_plugin.init_adapter import init_adapter
-from memory_migrate_plugin.serve import ACTION_HISTORY, DOWNLOAD_REGISTRY, execute_web_action, record_action_history, register_download, render_history_panel, render_page, render_summary_cards, save_uploaded_zip, summarize_action_result
+from memory_migrate_plugin.serve import ACTION_HISTORY, DOWNLOAD_REGISTRY, execute_web_action, record_action_history, register_download, render_history_panel, render_page, render_recommendation_comparison, render_summary_cards, save_uploaded_zip, summarize_action_result
 
 
 class MemoryMigrateTests(unittest.TestCase):
@@ -491,6 +491,19 @@ class MemoryMigrateTests(unittest.TestCase):
             self.assertTrue(item["url"].startswith("/download?token="))
             self.assertEqual(item["filename"], "bundle.zip")
 
+    def test_recommend_migration_targets_includes_why_not_top_for_lower_ranked_items(self) -> None:
+        result = recommend_migration_targets(Path("fixtures/openhands-repo"))
+        self.assertGreaterEqual(len(result["recommendations"]), 2)
+        self.assertEqual(result["recommendations"][0]["why_not_top"], [])
+        self.assertGreaterEqual(len(result["recommendations"][1]["why_not_top"]), 1)
+        self.assertGreaterEqual(len(result["comparison"]), 1)
+
+    def test_render_recommendation_comparison_outputs_panel(self) -> None:
+        result = execute_web_action("recommend", "fixtures/openhands-repo")
+        html = render_recommendation_comparison(result)
+        self.assertIn("Recommendation Comparison", html)
+        self.assertIn("Why not top", html)
+
     def test_recommend_migration_targets_prefers_repo_destinations_for_openhands(self) -> None:
         result = recommend_migration_targets(Path("fixtures/openhands-repo"))
         self.assertEqual(result["source"]["detected_format"], "openhands-repo")
@@ -524,6 +537,7 @@ class MemoryMigrateTests(unittest.TestCase):
         self.assertIn("Run Workflow", html)
         self.assertIn("Recent Activity", html)
         self.assertIn("summary-grid", render_page(summary_cards=[{"label": "Entries", "value": "3", "tone": "ok"}]))
+        self.assertIn("Recommendation Comparison", render_page(comparison_panel="<div>Recommendation Comparison</div>"))
 
     def test_execute_web_action_detect_returns_matches(self) -> None:
         result = execute_web_action("detect", "fixtures/generic-json/sample.json")

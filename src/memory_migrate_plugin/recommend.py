@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
@@ -91,6 +91,79 @@ def _recommend_profile(kind_counts: Counter[str], target_format: str) -> tuple[s
     return "default", ["Default profile preserves structure with minimal transformation."]
 
 
+def _build_recommendation(
+    target_name: str,
+    baseline: dict[str, Any],
+    kind_counts: Counter[str],
+    source_formats: set[str],
+    source_bonus_map: dict[str, int],
+    profile_names: set[str],
+) -> dict[str, Any]:
+    score = source_bonus_map.get(target_name, 0)
+    reasons = [baseline["reason"]]
+    score_breakdown: list[dict[str, Any]] = []
+
+    if score:
+        score_breakdown.append({"type": "source-affinity", "points": score, "detail": "Matches known migration affinity for the detected source format."})
+
+    for kind, weight in baseline["keywords"].items():
+        count = kind_counts.get(kind, 0)
+        if count:
+            points = count * weight
+            score += points
+            score_breakdown.append({"type": f"kind:{kind}", "points": points, "detail": f"Found {count} {kind} entries that fit this destination."})
+
+    if target_name in {"codex-repo", "claude-code-memory", "openhands-repo"} and len(source_formats) > 1:
+        score += 4
+        reasons.append("Multiple source formats suggest a repository-oriented destination.")
+        score_breakdown.append({"type": "repository-shape", "points": 4, "detail": "Repository-oriented targets benefit from mixed memory sources."})
+
+    if target_name == "generic-json":
+        score += 2
+        reasons.append("Canonical-friendly JSON is a safe integration fallback.")
+        score_breakdown.append({"type": "integration-fallback", "points": 2, "detail": "Machine-readable output remains useful for pipelines and APIs."})
+
+    profile, profile_reasons = _recommend_profile(kind_counts, target_name)
+    if profile not in profile_names:
+        profile = baseline["profiles"][0]
+    reasons.extend(profile_reasons)
+
+    return {
+        "target_format": target_name,
+        "recommended_profile": profile,
+        "score": score,
+        "reasons": reasons,
+        "score_breakdown": score_breakdown,
+        "strengths": [item["detail"] for item in score_breakdown[:3]],
+        "why_not_top": [],
+    }
+
+
+def _attach_why_not_top(recommendations: list[dict[str, Any]]) -> None:
+    if not recommendations:
+        return
+    top = recommendations[0]
+    top_score = top["score"]
+    top_target = top["target_format"]
+    top_profile = top["recommended_profile"]
+    top_breakdown_types = {item["type"] for item in top.get("score_breakdown", [])}
+
+    for item in recommendations[1:]:
+        reasons: list[str] = []
+        gap = top_score - item["score"]
+        if gap > 0:
+            reasons.append(f"Scores {gap} points lower than {top_target} for this source layout.")
+        item_types = {entry["type"] for entry in item.get("score_breakdown", [])}
+        missing_types = sorted(top_breakdown_types - item_types)
+        if missing_types:
+            reasons.append("Has weaker alignment on some of the strongest source-shape signals used by the top recommendation.")
+        if item["recommended_profile"] != top_profile:
+            reasons.append(f"Needs profile `{item['recommended_profile']}` instead of the top profile `{top_profile}` to stay effective.")
+        if not reasons:
+            reasons.append("This target is still viable, but the top recommendation has a slightly cleaner migration fit.")
+        item["why_not_top"] = reasons
+
+
 def recommend_migration_targets(source_path: Path, source_format: str | None = None) -> dict[str, Any]:
     matches = detect_format(source_path)
     resolved_source_format = source_format or (matches[0][0] if matches else None)
@@ -101,45 +174,33 @@ def recommend_migration_targets(source_path: Path, source_format: str | None = N
     kind_counts = Counter(entry.kind for entry in package.entries)
     registry = build_registry()
     profile_names = set(list_profiles())
-
-    recommendations: list[dict[str, Any]] = []
     source_bonus_map = SOURCE_TARGET_BONUSES.get(resolved_source_format, {})
     source_formats = set(package.source_formats)
 
+    recommendations: list[dict[str, Any]] = []
     for target_name, baseline in TARGET_BASELINES.items():
         if target_name == resolved_source_format or target_name not in registry:
             continue
-
-        score = source_bonus_map.get(target_name, 0)
-        reasons = [baseline["reason"]]
-
-        for kind, weight in baseline["keywords"].items():
-            count = kind_counts.get(kind, 0)
-            if count:
-                score += count * weight
-        if target_name in {"codex-repo", "claude-code-memory", "openhands-repo"} and len(source_formats) > 1:
-            score += 4
-            reasons.append("Multiple source formats suggest a repository-oriented destination.")
-        if target_name == "generic-json":
-            score += 2
-            reasons.append("Canonical-friendly JSON is a safe integration fallback.")
-
-        profile, profile_reasons = _recommend_profile(kind_counts, target_name)
-        if profile not in profile_names:
-            profile = baseline["profiles"][0]
-        reasons.extend(profile_reasons)
-
         recommendations.append(
-            {
-                "target_format": target_name,
-                "recommended_profile": profile,
-                "score": score,
-                "reasons": reasons,
-            }
+            _build_recommendation(target_name, baseline, kind_counts, source_formats, source_bonus_map, profile_names)
         )
 
     recommendations.sort(key=lambda item: (-item["score"], item["target_format"]))
     top = recommendations[:5]
+    _attach_why_not_top(top)
+
+    comparison = [
+        {
+            "target_format": item["target_format"],
+            "recommended_profile": item["recommended_profile"],
+            "score": item["score"],
+            "top_reason": item["reasons"][0],
+            "strengths": item["strengths"],
+            "why_not_top": item["why_not_top"],
+        }
+        for item in top[:3]
+    ]
+
     return {
         "source": {
             "input_path": str(source_path),
@@ -149,5 +210,6 @@ def recommend_migration_targets(source_path: Path, source_format: str | None = N
             "kind_counts": dict(sorted(kind_counts.items())),
         },
         "recommendations": top,
+        "comparison": comparison,
         "recommendation_count": len(top),
     }
